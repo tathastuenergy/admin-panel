@@ -56,11 +56,11 @@ const navItems: NavItem[] = [
     name: "Payment",
     path: "/payment",
   },
-  {
-    icon: <UserCircle />,
-    name: "User Profile",
-    path: "/profile",
-  },
+  // {
+  //   icon: <UserCircle />,
+  //   name: "User Profile",
+  //   path: "/profile",
+  // },
   {
     icon: <Settings />,
     name: "Setting",
