@@ -20,12 +20,12 @@ const FormContext = createContext<FormContextType | undefined>(undefined);
 
 export const FormProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [formStates, setFormStates] = useState<FormStates>({
-    profile: false,
-    estimate: false,
-    invoice: false,
-    customer: false,
-    inventory: false,
-    payment: false
+    profile: true,
+    estimate: true,
+    invoice: true,
+    customer: true,
+    inventory: true,
+    payment: true
   });
 
   const isFormEnabled = (formName: keyof FormStates): boolean => {
