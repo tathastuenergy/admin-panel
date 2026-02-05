@@ -13,10 +13,15 @@ import { Trash2 } from "lucide-react";
 import Select from "../../components/form/Select";
 import AddCustomerModal from "../../components/common/AddCustomerModal";
 import Loader from "../../components/common/Loader";
+import AddInventoryModal from "../../components/common/Addinventorymodal";
+import { useForm } from "../Context/FormContext";
 
 const AddEstimate = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { isFormEnabled } = useForm();
+  const isEnabledFromSettings = isFormEnabled("estimate");
+  const isFieldDisabled = id ? !isEnabledFromSettings : false;
 
   const [formData, setFormData] = useState({
     customerId: "",
@@ -38,6 +43,7 @@ const AddEstimate = () => {
   const [customers, setCustomers] = useState([]);
   const [inventoryData, setInventoryData] = useState([]);
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
+  const [isInventoryModalOpen, setIsInventoryModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -59,7 +65,7 @@ const AddEstimate = () => {
     fetchLastEstimateNumber();
   }, []);
 
-  const handleChange = (e) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>): void => {
     const { name, value } = e.target;
 
     setFormData((prev) => ({
@@ -73,31 +79,42 @@ const AddEstimate = () => {
     }));
   };
 
-  const handleItemChange = (index: number, e: any) => {
+  const handleItemChange = (index: number, e) => {
     const { name, value } = e.target;
 
     setFormData((prev: any) => {
       const updatedItems = [...prev.items];
-
-      // update current field
       updatedItems[index] = {
         ...updatedItems[index],
         [name]: value,
       };
 
-      // when item is selected, auto-fill tax
+      // Auto-fill taxRate if an item is selected
       if (name === "item") {
         const selectedItem = inventoryData.find((inv: any) => inv.id === value);
-
         if (selectedItem) {
-          updatedItems[index].taxRate = selectedItem.tax; // auto set tax
+          updatedItems[index].taxRate = String(selectedItem.tax); // Keep as string for Select consistency
         }
       }
 
-      return {
-        ...prev,
-        items: updatedItems,
-      };
+      return { ...prev, items: updatedItems };
+    });
+
+    // ✅ CLEAR ERROR
+    setErrors((prev) => {
+      const newErrors = { ...prev };
+      const errorKey = `${name}_${index}`;
+
+      if (newErrors[errorKey]) {
+        delete newErrors[errorKey];
+      }
+
+      // Special case: if selecting an item also fills the taxRate, clear tax error too
+      if (name === "item") {
+        delete newErrors[`taxRate_${index}`];
+      }
+
+      return newErrors;
     });
   };
 
@@ -123,7 +140,7 @@ const AddEstimate = () => {
                 description: item.description || "",
                 qty: item.qty || 0,
                 rate: item.rate || 0,
-                taxRate: item.taxRate || 0,
+                taxRate: String(item.taxRate) || 0,
               }))
             : [
                 {
@@ -156,8 +173,6 @@ const AddEstimate = () => {
       }
     } catch (error) {
       console.error(error);
-    } finally {
-      // setLoading(false);
     }
   };
 
@@ -185,7 +200,7 @@ const AddEstimate = () => {
       const res = await api.get(`${endPointApi.getAllCustomer}`);
 
       setCustomers(res.data.data || []);
-    } catch (err) {
+    } catch {
       toast.error("Failed to load customers");
     }
   };
@@ -208,7 +223,7 @@ const AddEstimate = () => {
       newErrors.date = "Date is required";
     }
 
-    if (!formData.state) {
+    if (!formData.state.trim()) {
       newErrors.state = "State is required";
     }
 
@@ -216,11 +231,17 @@ const AddEstimate = () => {
       if (!item.item) {
         newErrors[`item_${index}`] = "Item name required";
       }
+      if (!item.description) {
+        newErrors[`description_${index}`] = "Description is required";
+      }
       if (!item.qty || item.qty <= 0) {
-        newErrors[`qty_${index}`] = "Quantity must be greater than 0";
+        newErrors[`qty_${index}`] = "Quantity is required";
       }
       if (!item.rate || item.rate <= 0) {
-        newErrors[`rate_${index}`] = "Rate must be greater than 0";
+        newErrors[`rate_${index}`] = "Rate is required";
+      }
+      if (!item.taxRate) {
+        newErrors[`taxRate_${index}`] = "Tax is required";
       }
     });
 
@@ -269,8 +290,8 @@ const AddEstimate = () => {
       console.error(error);
       toast.error(error?.response?.data?.message || "Something went wrong");
     } finally {
-    setLoading(false); // loader OFF
-  }
+      setLoading(false); // loader OFF
+    }
   };
 
   const subtotal = formData.items.reduce((sum, item) => {
@@ -329,34 +350,32 @@ const AddEstimate = () => {
     label: p.name,
   }));
 
+  // Add this helper inside your component
+  const hasRowError = (index: number) => {
+    return Object.keys(errors).some((key) => key.endsWith(`_${index}`));
+  };
   return (
     <ComponentCard title={id ? "Edit Estimate" : "Add Estimate"}>
+      {/* Optional: Show a warning banner if disabled */}
+  {isFieldDisabled && (
+    <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">
+      Editing is currently disabled in Settings.
+    </div>
+  )}
       {loading && <Loader src="/loader.mp4" fullScreen />}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div>
           <div className="flex items-center justify-between">
             <Label>Customer Name</Label>
           </div>
-          {/* <Select
-            options={customerOptions}
-            value={formData.customerId}
-            placeholder="Select Customer"
-            showAddButton={true}
-            onAddNew={() => navigate("/customer/add")}
-            addButtonText="Add New Customer"
-            onChange={(value) => {
-              const selectedCustomer = customers.find((c) => c.id === value);
-
-              setFormData((prev) => ({
-                ...prev,
-                customerId: value, // store ID
-                state: selectedCustomer?.state || "",
-              }));
-            }}
-          /> */}
 
           <Select
+            disabled={isFieldDisabled}
             options={customerOptions}
+            name="customerId"
+            className={
+              errors.customerId ? "border-red-500 focus:ring-red-200" : ""
+            }
             value={formData.customerId}
             placeholder="Select Customer"
             showAddButton={true}
@@ -369,6 +388,7 @@ const AddEstimate = () => {
                 customerId: value,
                 state: selectedCustomer?.state || "",
               }));
+              setErrors((prev) => ({ ...prev, customerId: "", state: "" }));
             }}
           />
 
@@ -379,158 +399,264 @@ const AddEstimate = () => {
             onSuccess={fetchCustomers}
           />
           {errors.customerId && (
-            <p className="text-red-500">{errors.customerId}</p>
+            <p className="text-red-500 text-sm mt-1">{errors.customerId}</p>
           )}
         </div>
 
         <div>
           <Label>Estimate Number</Label>
           <Input
+            disabled={isFieldDisabled}
             name="estimateNumber"
             value={formData.estimateNumber}
             onChange={handleChange}
             placeholder="EST-001"
+            className={
+              errors.estimateNumber ? "border-red-500 focus:ring-red-200" : ""
+            }
           />
           {errors.estimateNumber && (
-            <p className="text-red-500">{errors.estimateNumber}</p>
+            <p className="text-red-500 text-sm mt-1">{errors.estimateNumber}</p>
           )}
         </div>
 
         <div>
           <DatePicker
+            disabled={isFieldDisabled}
             id="estimate-date"
             label="Estimate Date"
             placeholder="Select date"
             defaultDate={formData.date}
+            className={errors.date ? "border-red-500 focus:ring-red-200" : ""}
             onChange={(selectedDates) => {
               setFormData((prev) => ({
                 ...prev,
                 date: selectedDates[0], // IMPORTANT
               }));
+              setErrors((prev) => ({ ...prev, date: "" }));
             }}
           />
-          {errors.date && <p className="text-red-500">{errors.date}</p>}
+          {errors.date && (
+            <p className="text-red-500 text-sm mt-1">{errors.date}</p>
+          )}
         </div>
 
         <div>
           <Label>State</Label>
           <Input
             name="state"
+            className={errors.state ? "border-red-500 focus:ring-red-200" : ""}
             value={formData.state}
-            onChange={handleChange}
             disabled
           />
-          {errors.state && <p className="text-red-500">{errors.state}</p>}
+          {errors.state && (
+            <p className="text-red-500 text-sm mt-1">{errors.state}</p>
+          )}
         </div>
       </div>
 
       {/* Items */}
       <div className="mt-6">
-        {formData.items.map((item, index) => (
-          <div
-            key={index}
-            className="grid grid-cols-[2fr_2fr_1fr_1fr_1fr_1fr_auto] gap-3 mb-3 items-center"
-          >
-            {/* Item */}
-            <div className="flex items-center gap-2">
-              <div className="flex-1">
+        {formData.items.map((item, index) => {
+          const isRowError = hasRowError(index);
+          return (
+            <div
+              key={index}
+              className="grid grid-cols-[2fr_2fr_1fr_1fr_1fr_1fr_auto] gap-3 mb-3 items-center"
+            >
+              {/* Item */}
+              <div className="flex items-center gap-2">
+                <div className="flex-1">
+                  <Select
+                    disabled={isFieldDisabled}
+                    options={inventoryOptions}
+                    value={item.item}
+                    placeholder="Select Item"
+                    className={
+                      errors[`item_${index}`]
+                        ? "border-red-500 focus:ring-red-200"
+                        : ""
+                    }
+                    showAddButton={true}
+                   onAddNew={() => setIsInventoryModalOpen(true)}
+                    addButtonText="Add New Inventory"
+                    onChange={(value) =>
+                      handleItemChange(index, {
+                        target: { name: "item", value },
+                      })
+                    }
+                  />
+                  {isRowError && ( // 2. Spacer appears if ANY error in row exists
+                    <div className="min-h-[20px]">
+                      {errors[`item_${index}`] && (
+                        <p className="text-red-500 text-sm mt-1">
+                          {errors[`item_${index}`]}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Add Inventory Modal */}
+              <AddInventoryModal
+                isOpen={isInventoryModalOpen}
+                onClose={() => setIsInventoryModalOpen(false)}
+                onSuccess={getInventory}
+              />
+              {/* Description */}
+              <div>
+                <Input
+                  disabled={isFieldDisabled}
+                  type="text"
+                  name="description"
+                  className={
+                    errors[`description_${index}`]
+                      ? "border-red-500 focus:ring-red-200"
+                      : ""
+                  }
+                  placeholder="Description"
+                  value={item.description}
+                  onChange={(e) => handleItemChange(index, e)}
+                />
+                {isRowError && (
+                  <div className="min-h-[20px]">
+                    {errors[`description_${index}`] && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors[`description_${index}`]}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Qty Input Example */}
+              <div>
+                <Input
+                  disabled={isFieldDisabled}
+                  type="number"
+                  name="qty"
+                  placeholder="Qty"
+                  value={item.qty}
+                  className={
+                    errors[`qty_${index}`]
+                      ? "border-red-500 focus:ring-red-200"
+                      : ""
+                  }
+                  onChange={(e) => handleItemChange(index, e)}
+                />
+                {isRowError && (
+                  <div className="min-h-[20px]">
+                    {errors[`qty_${index}`] && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors[`qty_${index}`]}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Rate Input Example */}
+              <div>
+                <Input
+                  disabled={isFieldDisabled}
+                  type="number"
+                  name="rate"
+                  placeholder="Rate"
+                  value={item.rate}
+                  className={
+                    errors[`rate_${index}`]
+                      ? "border-red-500 focus:ring-red-200"
+                      : ""
+                  }
+                  onChange={(e) => handleItemChange(index, e)}
+                />
+                {isRowError && (
+                  <div className="min-h-[20px]">
+                    {errors[`rate_${index}`] && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors[`rate_${index}`]}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Tax */}
+              <div>
                 <Select
-                  options={inventoryOptions}
-                  value={item.item}
-                  placeholder="Select Item"
+                  disabled={isFieldDisabled}
+                  value={item.taxRate}
+                  placeholder="Tax %"
                   showAddButton={true}
-                  onAddNew={() => navigate("/inventory/add")}
-                  addButtonText="Add New Inventory"
+                  className={
+                    errors[`taxRate_${index}`]
+                      ? "border-red-500 focus:ring-red-200"
+                      : ""
+                  }
+                  options={[
+                    { value: "5", label: "5%" },
+                    { value: "18", label: "18%" },
+                  ]}
                   onChange={(value) =>
                     handleItemChange(index, {
-                      target: { name: "item", value },
-                    } as any)
+                      target: { name: "taxRate", value },
+                    })
                   }
                 />
+                {isRowError && (
+                  <div className="min-h-[20px]">
+                    {errors[`taxRate_${index}`] && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors[`taxRate_${index}`]}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Total */}
+              <div>
+                <Input
+                  disabled={isFieldDisabled}
+                  name="total"
+                  placeholder="Total"
+                  value={
+                    item.qty && item.rate
+                      ? Number(item.qty) * Number(item.rate)
+                      : ""
+                  }
+                  readOnly
+                />
+                {isRowError && <div className="min-h-[20px]"></div>}
+              </div>
+
+              {/* Delete */}
+              <div
+                className={`flex justify-center ${
+                  isRowError ? "flex-col items-center" : ""
+                }`}
+              >
+                <button
+                  disabled={isFieldDisabled}
+                  type="button"
+                  onClick={() => removeItem(index)}
+                  className="text-red-500"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+                <div className="min-h-[16px] mt-1">
+                  {isRowError && <span className="text-xs text-red-500"></span>}
+                </div>
               </div>
             </div>
+          );
+        })}
 
-            {/* Description */}
-            <div>
-              <Input
-                name="description"
-                placeholder="Description"
-                value={item.description}
-                onChange={(e) => handleItemChange(index, e)}
-              />
-            </div>
-
-            {/* Qty */}
-            <div>
-              <Input
-                type="number"
-                name="qty"
-                placeholder="Qty"
-                value={item.qty}
-                onChange={(e) => handleItemChange(index, e)}
-              />
-            </div>
-
-            {/* Rate */}
-            <div>
-              <Input
-                type="number"
-                name="rate"
-                placeholder="Rate"
-                value={item.rate}
-                onChange={(e) => handleItemChange(index, e)}
-              />
-            </div>
-
-            {/* Tax */}
-            <div>
-              <Select
-                value={item.taxRate}
-                placeholder="Tax %"
-                options={[
-                  { value: "5", label: "5%" },
-                  { value: "18", label: "18%" },
-                ]}
-                onChange={(value) =>
-                  handleItemChange(index, {
-                    target: { name: "taxRate", value },
-                  } as any)
-                }
-              />
-            </div>
-
-            {/* Total */}
-            <div>
-              <Input
-                name="total"
-                placeholder="Total"
-                value={
-                  item.qty && item.rate
-                    ? Number(item.qty) * Number(item.rate)
-                    : ""
-                }
-                readOnly
-              />
-            </div>
-
-            {/* Delete */}
-            <div className="flex justify-center">
-              <button
-                type="button"
-                onClick={() => removeItem(index)}
-                className="text-red-500"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        ))}
-
-        <div className="grid grid-cols-2 gap-4 max-w-full">
+        <div className="grid grid-cols-2 gap-4 max-w-full mt-6">
           {/* Left Side: Add Item Button */}
           <div className="flex items-start">
-            <button onClick={addItem} className="primary-color-text">
-              {/* <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90"> */}
+            <button disabled={isFieldDisabled} onClick={addItem} className="primary-color-text">
               + Add Item
             </button>
           </div>
@@ -607,11 +733,10 @@ const AddEstimate = () => {
         </button>
         <button
           onClick={handleSubmit}
-          disabled={loading}
-          className="primary-color text-white px-5 py-2 rounded"
+          disabled={loading || isFieldDisabled}
+          className={`${isFieldDisabled ? "bg-gray-400 cursor-not-allowed" : "primary-color"} text-white px-5 py-2 rounded`}
         >
-           {loading ? "Please wait" : "Save Estimate"}
-          
+          {loading ? "Please wait" : "Save Estimate"}
         </button>
       </div>
     </ComponentCard>

@@ -18,6 +18,7 @@ import {
 } from "../../components/ui/dialog/Dailog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import Loader from "../../components/common/Loader";
+import { useForm } from "../Context/FormContext";
 
 interface PaymentFormData {
   customerId: string;
@@ -39,6 +40,9 @@ interface Customer {
 const AddPayment = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { isFormEnabled } = useForm();
+  const isEnabledFromSettings = isFormEnabled("payment");
+  const isFieldDisabled = id ? !isEnabledFromSettings : false;
 
   const [formData, setFormData] = useState<PaymentFormData>({
     customerId: "",
@@ -52,7 +56,7 @@ const AddPayment = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [allInvoices, setAllInvoices] = useState<
-    { id: string; invoiceNo: string; customerId: {id: string} }[]
+    { id: string; invoiceNo: string; customerId: { id: string } }[]
   >([]);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -122,7 +126,11 @@ const AddPayment = () => {
     fetchPayment();
   }, [id]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
+  ) => {
     const { name, value } = e.target;
 
     setFormData((prev) => ({
@@ -295,7 +303,7 @@ const AddPayment = () => {
     (inv) => inv.customerId?.id === formData.customerId,
   );
 
-  console.log('invoices', invoices, allInvoices)
+  console.log("invoices", invoices, allInvoices);
   const invoiceOptions = invoices.map((inv) => ({
     value: inv.id,
     label: inv.invoiceNo,
@@ -306,16 +314,6 @@ const AddPayment = () => {
     { value: "online", label: "Online" },
   ];
 
-  // if (loading && id) {
-  //   return (
-  //     <ComponentCard title="Loading...">
-  //       <div className="flex items-center justify-center py-12">
-  //         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-  //       </div>
-  //     </ComponentCard>
-  //   );
-  // }
-
   return (
     <ComponentCard title={id ? "Edit Payment" : "Add Payment"}>
       {loading && <Loader src="/loader.mp4" fullScreen />}
@@ -324,6 +322,8 @@ const AddPayment = () => {
         <div>
           <Label>Customer Name *</Label>
           <Select
+            className={errors.customerId ? "border-red-500 focus:ring-red-200" : ""}
+            disabled={isFieldDisabled}
             options={customerOptions}
             value={formData.customerId}
             placeholder="Select Customer"
@@ -351,6 +351,8 @@ const AddPayment = () => {
         <div>
           <Label>Invoice Number *</Label>
           <Select
+            className={errors.invoiceId ? "border-red-500 focus:ring-red-200" : ""}
+            disabled={isFieldDisabled}
             options={invoiceOptions}
             value={formData.invoiceId}
             placeholder="Select Invoice"
@@ -374,6 +376,7 @@ const AddPayment = () => {
         {/* Date */}
         <div>
           <DatePicker
+            disabled={isFieldDisabled}
             id="payment-date"
             label="Payment Date *"
             placeholder="Select date"
@@ -399,8 +402,11 @@ const AddPayment = () => {
         <div>
           <Label>Payment Mode *</Label>
           <Select
+            className={errors.paymentMode ? "border-red-500 focus:ring-red-200" : ""}
+            disabled={isFieldDisabled}
             options={paymentModeOptions}
             value={formData.paymentMode}
+            showAddButton={true}
             placeholder="Select Payment Mode"
             onChange={(value) => {
               setFormData((prev) => ({
@@ -422,6 +428,8 @@ const AddPayment = () => {
         <div>
           <Label>Amount *</Label>
           <Input
+            className={errors.amount ? "border-red-500 focus:ring-red-200" : ""}
+            disabled={isFieldDisabled}
             type="number"
             name="amount"
             value={formData.amount}
@@ -438,6 +446,7 @@ const AddPayment = () => {
         <div className="md:col-span-2">
           <Label>Note (Optional)</Label>
           <TextArea
+            disabled={isFieldDisabled}
             name="note"
             value={formData.note}
             onChange={handleChange}
@@ -454,39 +463,65 @@ const AddPayment = () => {
         {/* Image Upload */}
         <div className="">
           <Label>Payment Receipt (Optional)</Label>
-          <div className="relative group">
+          <div
+            className={`relative group ${isFieldDisabled ? "pointer-events-none opacity-60" : ""}`}
+          >
             {imagePreview ? (
               <div className="relative overflow-hidden rounded-xl shadow-lg">
                 <img
                   src={imagePreview}
                   alt="Preview"
-                  className="w-32 h-32 object-cover cursor-zoom-in transition-transform duration-200 hover:scale-105"
-                  onClick={() => setIsZoomed(true)}
+                  // Disable zoom click if form is disabled
+                  className={`w-32 h-32 object-cover transition-transform duration-200 ${
+                    isFieldDisabled
+                      ? "cursor-default"
+                      : "cursor-zoom-in hover:scale-105"
+                  }`}
+                  onClick={() => !isFieldDisabled && setIsZoomed(true)}
                 />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors pointer-events-none" />
-                <div className="absolute bottom-2 left-2 bg-white/80 backdrop-blur-sm text-gray-600 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition pointer-events-none">
-                  <ZoomIn className="w-4 h-4" />
-                </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeImage();
-                  }}
-                  className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm text-gray-800 p-1.5 rounded-full hover:bg-white transition shadow-md opacity-0 group-hover:opacity-100"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+
+                {/* Hide overlay icons in disabled mode */}
+                {!isFieldDisabled && (
+                  <>
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors pointer-events-none" />
+                    <div className="absolute bottom-2 left-2 bg-white/80 backdrop-blur-sm text-gray-600 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition pointer-events-none">
+                      <ZoomIn className="w-4 h-4" />
+                    </div>
+                    <button
+                      type="button" // Always specify button type
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeImage();
+                      }}
+                      className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm text-gray-800 p-1.5 rounded-full hover:bg-white transition shadow-md opacity-0 group-hover:opacity-100"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </>
+                )}
               </div>
             ) : (
-              <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-primary/30 rounded-xl cursor-pointer hover:border-primary hover:bg-primary/5 transition-all duration-300 bg-muted/30">
-                <Upload className="w-8 h-8 text-primary/60 mb-2" />
+              <label
+                className={`flex flex-col items-center justify-center h-32 border-2 border-dashed rounded-xl transition-all duration-300 
+        ${
+          isFieldDisabled
+            ? "border-gray-200 bg-gray-50 cursor-not-allowed"
+            : "border-primary/30 cursor-pointer hover:border-primary hover:bg-primary/5 bg-muted/30"
+        }`}
+              >
+                <Upload
+                  className={`w-8 h-8 mb-2 ${isFieldDisabled ? "text-gray-300" : "text-primary/60"}`}
+                />
                 <p className="text-sm font-medium text-foreground/70">
-                  Drop image here
+                  {isFieldDisabled ? "Upload Locked" : "Drop image here"}
                 </p>
-                <p className="text-xs text-muted-foreground">
-                  or click to browse
-                </p>
+                {!isFieldDisabled && (
+                  <p className="text-xs text-muted-foreground">
+                    or click to browse
+                  </p>
+                )}
                 <input
+                  disabled={isFieldDisabled}
                   type="file"
                   className="hidden"
                   accept="image/*"
@@ -527,7 +562,7 @@ const AddPayment = () => {
           type="button"
           onClick={handleSubmit}
           className="primary-color text-white px-6 py-2 rounded-lg hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={loading}
+          disabled={loading || isFieldDisabled}
         >
           {loading ? "Please wait" : id ? "Update Payment" : "Save Payment"}
         </button>

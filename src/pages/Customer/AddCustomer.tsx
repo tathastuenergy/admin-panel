@@ -11,10 +11,14 @@ import TextArea from "../../components/form/input/TextArea";
 import Select from "../../components/form/Select";
 import { cityOptions, getStateFromCity } from "../../utils/cityStateData";
 import Loader from "../../components/common/Loader";
+import { useForm } from "../Context/FormContext";
 
 const AddCustomer = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { isFormEnabled } = useForm();
+  const isEnabledFromSettings = isFormEnabled("customer");
+  const isFieldDisabled = id ? !isEnabledFromSettings : false;
 
   const [formData, setFormData] = useState({
     name: "",
@@ -59,9 +63,14 @@ const AddCustomer = () => {
       if (name === "pincode" && value.length > 6) return;
     }
 
+    // GST Number - alphanumeric only, max 15 chars
+    if (name === "gst_number") {
+      if (value.length > 15) return; // Max 15 characters
+      if (!/^[a-zA-Z0-9]*$/.test(value)) return; // Only letters and numbers
+    }
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: name === "gst_number" ? value.toUpperCase() : value, // ✅
     }));
 
     setErrors((prev) => ({
@@ -121,10 +130,20 @@ const AddCustomer = () => {
       newErrors.gst_number = "GST number is required";
     } else if (
       !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(
-        formData.gst_number
+        formData.gst_number,
       )
     ) {
       newErrors.gst_number = "Enter a valid GST number";
+    }
+
+    if (!formData.email) {
+      newErrors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = "Enter a valid email address";
+    }
+
+    if (!formData.address) {
+      newErrors.address = "Address is required";
     }
 
     // City
@@ -157,25 +176,27 @@ const AddCustomer = () => {
 
       if (res.data?.success) {
         toast.success(
-          id ? "Customer updated successfully" : "Customer added successfully"
+          id ? "Customer updated successfully" : "Customer added successfully",
         );
         navigate("/customer");
       }
     } catch (error) {
       toast.error(error.response.data.message);
-    }finally {
-    setLoading(false); // loader OFF 
-  }
+    } finally {
+      setLoading(false); // loader OFF
+    }
   };
 
   return (
-    <ComponentCard title="Add Customer">
+    <ComponentCard title={id ? "Edit Customer" : "Add Customer"}>
       {loading && <Loader src="/loader.mp4" fullScreen />}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {/* Customer Name */}
         <div>
           <Label>Customer Name</Label>
           <Input
+            disabled={isFieldDisabled}
+            className={errors.name ? "border-red-500 focus:ring-red-200" : ""}
             type="text"
             name="name"
             value={formData.name}
@@ -191,6 +212,8 @@ const AddCustomer = () => {
         <div>
           <Label>Mobile Number</Label>
           <Input
+            disabled={isFieldDisabled}
+            className={errors.mobile ? "border-red-500 focus:ring-red-200" : ""}
             type="text"
             name="mobile"
             value={formData.mobile}
@@ -208,18 +231,27 @@ const AddCustomer = () => {
         <div>
           <Label>Email Address</Label>
           <Input
+            disabled={isFieldDisabled}
+            className={errors.email ? "border-red-500 focus:ring-red-200" : ""}
             type="email"
             name="email"
             value={formData.email}
             onChange={handleChange}
             placeholder="Enter email address"
           />
+          {errors.email && (
+            <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+          )}
         </div>
 
         {/* GST */}
         <div>
           <Label>GST Number</Label>
           <Input
+            disabled={isFieldDisabled}
+            className={
+              errors.gst_number ? "border-red-500 focus:ring-red-200" : ""
+            }
             type="text"
             name="gst_number"
             value={formData.gst_number}
@@ -235,17 +267,27 @@ const AddCustomer = () => {
         <div className="md:col-span-2 md:row-span-2 h-full">
           <Label>Address</Label>
           <TextArea
+            disabled={isFieldDisabled}
+            className={
+              errors.address ? "border-red-500 focus:ring-red-200" : ""
+            }
             name="address"
             value={formData.address}
             onChange={handleChange}
             placeholder="Enter your address"
           />
+          {errors.address && (
+            <p className="text-red-500 text-sm mt-1">{errors.address}</p>
+          )}
         </div>
 
         {/* City */}
         <div>
           <Label>City</Label>
           <Select
+            disabled={isFieldDisabled}
+            className={errors.city ? "border-red-500 focus:ring-red-200" : ""}
+            showAddButton={true}
             options={cityOptions}
             value={formData.city}
             onChange={handleCityChange}
@@ -259,6 +301,7 @@ const AddCustomer = () => {
         <div>
           <Label>State</Label>
           <Input
+            disabled={isFieldDisabled}
             type="text"
             name="state"
             value={formData.state}
@@ -271,6 +314,7 @@ const AddCustomer = () => {
         <div>
           <Label>Country</Label>
           <Input
+            disabled={isFieldDisabled}
             type="text"
             name="country"
             value={formData.country}
@@ -283,6 +327,10 @@ const AddCustomer = () => {
         <div>
           <Label>Pincode</Label>
           <Input
+            disabled={isFieldDisabled}
+            className={
+              errors.pincode ? "border-red-500 focus:ring-red-200" : ""
+            }
             type="text"
             name="pincode"
             value={formData.pincode}
@@ -307,11 +355,10 @@ const AddCustomer = () => {
         </button>
         <button
           onClick={handleSubmit}
-          disabled={loading}
-          className="px-5 py-2 primary-color text-white rounded "
+          disabled={loading || isFieldDisabled}
+          className={`${isFieldDisabled ? "bg-gray-400 cursor-not-allowed" : "primary-color"} text-white px-5 py-2 rounded`}
         >
-           {loading ? "Please wait" : "Save Customer"}
-
+          {loading ? "Please wait" : "Save Customer"}
         </button>
       </div>
     </ComponentCard>

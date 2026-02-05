@@ -21,7 +21,7 @@ export interface EndPointApi {
     //Inventory
     getAllInventory?: string;
     getByIdInventory?: string;
-    createInventory?: string;
+    createInventory: string;
     updateInventory?: string;
     deleteInventory?: string;
     uploadExcelInventory?: string;

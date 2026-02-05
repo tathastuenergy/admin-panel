@@ -34,6 +34,8 @@ import AddPayment from "./pages/Payment/AddPayment";
 import AddCompany from "./pages/Company/AddCompany";
 import Payment from "./pages/Payment/Payment";
 import StatementOfAccounts from "./pages/Customer/StatementOfAccounts";
+import Settings from "./pages/Settings/Settings";
+import { FormProvider } from "./pages/Context/FormContext";
 
 // const ProtectedRoute = () => {
 //   const isAuthenticated = !!localStorage.getItem("accessToken");
@@ -44,21 +46,22 @@ import StatementOfAccounts from "./pages/Customer/StatementOfAccounts";
 export default function App() {
   return (
     <>
-      <Router>
-        <ScrollToTop />
-        <ToastContainer
-          position="top-right"
-          autoClose={3000}
-          hideProgressBar={false}
-          style={{ marginTop: "60px" }}
-          newestOnTop
-          closeOnClick
-          pauseOnHover
-          theme="light"
-        />
-        <Routes>
-          {/* Dashboard Layout */}
-          {/* <Route element={<ProtectedRoute />}> */}
+      <FormProvider>
+        <Router>
+          <ScrollToTop />
+          <ToastContainer
+            position="top-right"
+            autoClose={3000}
+            hideProgressBar={false}
+            style={{ marginTop: "60px" }}
+            newestOnTop
+            closeOnClick
+            pauseOnHover
+            theme="light"
+          />
+          <Routes>
+            {/* Dashboard Layout */}
+            {/* <Route element={<ProtectedRoute />}> */}
             <Route element={<AppLayout />}>
               <Route index path="/" element={<Home />} />
               <Route index path="/customer" element={<Customer />} />
@@ -93,6 +96,8 @@ export default function App() {
 
               {/* Others Page */}
               <Route path="/profile" element={<UserProfiles />} />
+              <Route path="/settings" element={<Settings />} />
+
               <Route path="/blank" element={<Blank />} />
 
               {/* Forms */}
@@ -106,19 +111,20 @@ export default function App() {
               <Route path="/badge" element={<Badges />} />
               <Route path="/buttons" element={<Buttons />} />
 
-               {/* <Route path="/signin" element={<SignIn />} />
+              {/* <Route path="/signin" element={<SignIn />} />
           <Route path="/signup" element={<SignUp />} /> */}
             </Route>
-          {/* </Route> */}
+            {/* </Route> */}
 
-          {/* Auth Layout */}
-          <Route path="/signin" element={<SignIn />} />
-          <Route path="/signup" element={<SignUp />} />
+            {/* Auth Layout */}
+            <Route path="/signin" element={<SignIn />} />
+            <Route path="/signup" element={<SignUp />} />
 
-          {/* Fallback Route */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Router>
+            {/* Fallback Route */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Router>
+      </FormProvider>
     </>
   );
 }

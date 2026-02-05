@@ -8,6 +8,7 @@ import { api } from "../../utils/axiosInstance";
 import endPointApi from "../../utils/endPointApi";
 import Select from "../../components/form/Select";
 import Loader from "../../components/common/Loader";
+import { useForm } from "../Context/FormContext";
 
 type FormErrors = {
   name?: string;
@@ -20,6 +21,9 @@ type FormErrors = {
 const AddInventory = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { isFormEnabled } = useForm();
+  const isEnabledFromSettings = isFormEnabled("inventory");
+  const isFieldDisabled = id ? !isEnabledFromSettings : false;
 
   const [formData, setFormData] = useState({
     name: "",
@@ -52,7 +56,7 @@ const AddInventory = () => {
 
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: name === "name" ? value.trimStart() : value,
     }));
 
     setErrors((prev) => ({
@@ -141,28 +145,47 @@ const AddInventory = () => {
 
       if (res.data?.success) {
         toast.success(
-          id ? "Inventory updated successfully" : "Inventory added successfully"
+          id
+            ? "Inventory updated successfully"
+            : "Inventory added successfully",
         );
         navigate("/inventory");
       }
     } catch (error: any) {
-      toast.error(error.response.data.message);
-    }finally {
-    setLoading(false); // loader OFF
-  }
+      if (error.response?.data?.message) {
+        const message = error.response.data.message;
+
+        // 🔥 Handle duplicate name
+        if (message.toLowerCase().includes("already exists")) {
+          setErrors((prev) => ({
+            ...prev,
+            name: message,
+          }));
+          return;
+        }
+
+        toast.error(message);
+      } else {
+        toast.error("Something went wrong");
+      }
+    } finally {
+      setLoading(false); // loader OFF
+    }
   };
 
   return (
-    <ComponentCard title="Add Inventory">
+    <ComponentCard title={id ? "Edit Inventory" : "Add Inventory"}>
       {loading && <Loader src="/loader.mp4" fullScreen />}
-      
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Inventory Name */}
         <div>
           <Label>Inventory Name</Label>
           <Input
+            disabled={isFieldDisabled}
             type="text"
             name="name"
+            className={errors.name ? "border-red-500 focus:ring-red-200" : ""}
             value={formData.name}
             onChange={handleChange}
             placeholder="Enter inventory"
@@ -176,8 +199,10 @@ const AddInventory = () => {
         <div>
           <Label>Unit</Label>
           <Input
+            disabled={isFieldDisabled}
             type="text"
             name="unit"
+            className={errors.unit ? "border-red-500 focus:ring-red-200" : ""}
             value={formData.unit}
             onChange={handleChange}
             // inputMode="numeric"
@@ -192,8 +217,10 @@ const AddInventory = () => {
         <div>
           <Label>HSN</Label>
           <Input
+            disabled={isFieldDisabled}
             type="number"
             name="hsn"
+            className={errors.hsn ? "border-red-500 focus:ring-red-200" : ""}
             value={formData.hsn}
             onChange={handleChange}
             onKeyDown={(e) => {
@@ -212,8 +239,11 @@ const AddInventory = () => {
         <div>
           <Label>Tax</Label>
           <Select
+            disabled={isFieldDisabled}
             value={formData.tax}
             placeholder="Tax %"
+            showAddButton={true}
+            className={errors.tax ? "border-red-500 focus:ring-red-200" : ""}
             options={[
               { value: "5", label: "5%" },
               { value: "18", label: "18%" },
@@ -228,8 +258,12 @@ const AddInventory = () => {
         <div>
           <Label>Purchase</Label>
           <Input
+            disabled={isFieldDisabled}
             type="text"
             name="purchase"
+            className={
+              errors.purchase ? "border-red-500 focus:ring-red-200" : ""
+            }
             value={formData.purchase}
             onChange={handleChange}
             placeholder="Enter purchase"
@@ -249,11 +283,11 @@ const AddInventory = () => {
           Cancel
         </button>
         <button
-          className="px-5 py-2 primary-color text-white rounded"
+          disabled={loading || isFieldDisabled}
+          className={`${isFieldDisabled ? "bg-gray-400 cursor-not-allowed" : "primary-color"} text-white px-5 py-2 rounded`}
           onClick={handleSubmit}
         >
-           {loading ? "Please wait" : "Save Inventory"}
-
+          {loading ? "Please wait" : "Save Inventory"}
         </button>
       </div>
     </ComponentCard>
