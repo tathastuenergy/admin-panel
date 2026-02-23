@@ -54,7 +54,20 @@ export default function InvoiceDownload({
     subTotal: 0,
     totalTax: 0,
     grandTotal: 0,
-    items: [] as any[],
+    items: [
+      {
+        item: { name: "", unit: "", hsn: "", id: "" },
+        description: "",
+        qty: 0,
+        rate: 0,
+        taxRate: 0,
+        igst: 0,
+        sgst: 0,
+        cgst: 0,
+        total: 0,
+        taxableAmount: 0,
+      },
+    ],
   });
 
   const [company, setCompany] = useState<Company | null>(null);
@@ -276,7 +289,7 @@ export default function InvoiceDownload({
             {formData.items.map((item, index) => (
               <tr key={index} className="border-b">
                 <td className="p-2 text-sm">{index + 1}</td>
-                <td className="p-2 text-sm">{item.description}</td>
+                <td className="p-2 text-sm">{item.description ? `${item.item?.name} - ${item.description}` : ""}</td>
                 <td className="p-2 text-sm">{item.item?.hsn}</td>
                 <td className="p-2 text-sm">{item.qty}</td>
                 <td className="p-2 text-sm">{item.rate}</td>

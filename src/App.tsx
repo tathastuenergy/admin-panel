@@ -2,6 +2,8 @@ import {
   HashRouter as Router,
   Routes,
   Route,
+  Outlet,
+  Navigate,
   // Outlet,
   // Navigate,
 } from "react-router-dom";
@@ -37,11 +39,17 @@ import StatementOfAccounts from "./pages/Customer/StatementOfAccounts";
 import Settings from "./pages/Settings/Settings";
 import { FormProvider } from "./pages/Context/FormContext";
 
-// const ProtectedRoute = () => {
-//   const isAuthenticated = !!localStorage.getItem("accessToken");
+const ProtectedRoute = () => {
+  const isAuthenticated = !!localStorage.getItem("accessToken");
 
-//   return isAuthenticated ? <Outlet /> : <Navigate to="/signin" replace />;
-// };
+  return isAuthenticated ? <Outlet /> : <Navigate to="/signin" replace />;
+};
+
+// ✅ Public route - redirects to / if already logged in
+const PublicRoute = () => {
+  const isAuthenticated = !!localStorage.getItem("accessToken");
+  return isAuthenticated ? <Navigate to="/" replace /> : <Outlet />;
+};
 
 export default function App() {
   return (
@@ -60,65 +68,62 @@ export default function App() {
             theme="light"
           />
           <Routes>
-            {/* Dashboard Layout */}
-            {/* <Route element={<ProtectedRoute />}> */}
-            <Route element={<AppLayout />}>
-              <Route index path="/" element={<Home />} />
-              <Route index path="/customer" element={<Customer />} />
-              <Route path="/customer/add" element={<AddCustomer />} />
-              <Route path="/customer/edit/:id" element={<AddCustomer />} />
-              <Route
-                path="/customer/:id/statement"
-                element={<StatementOfAccounts />}
-              />
-
-              <Route index path="/company/add" element={<AddCompany />} />
-
-              <Route index path="/inventory" element={<Inventory />} />
-              <Route path="/inventory/add" element={<AddInventory />} />
-              <Route path="/inventory/edit/:id" element={<AddInventory />} />
-
-              <Route index path="/estimate" element={<Estimate />} />
-              <Route path="/estimate/add" element={<AddEstimate />} />
-              <Route path="/estimate/edit/:id" element={<AddEstimate />} />
-              <Route path="/estimate/view/:id" element={<EstimateView />} />
-              {/* <Route path="/estimate/download/:id" element={<EstimateDownload />} /> */}
-
-              <Route index path="/invoice" element={<Invoice />} />
-              <Route path="/invoice/add" element={<AddInvoice />} />
-              <Route path="/invoice/edit/:id" element={<AddInvoice />} />
-              <Route path="/invoice/view/:id" element={<InvoiceView />} />
-
-              {/* Payment */}
-              <Route index path="/payment" element={<Payment />} />
-              <Route path="/payment/add" element={<AddPayment />} />
-              <Route path="/payment/edit/:id" element={<AddPayment />} />
-
-              {/* Others Page */}
-              <Route path="/profile" element={<UserProfiles />} />
-              <Route path="/settings" element={<Settings />} />
-
-              <Route path="/blank" element={<Blank />} />
-
-              {/* Forms */}
-              <Route path="/form-elements" element={<FormElements />} />
-
-              {/* Tables */}
-              <Route path="/basic-tables" element={<BasicTables />} />
-
-              {/* Ui Elements */}
-              <Route path="/alerts" element={<Alerts />} />
-              <Route path="/badge" element={<Badges />} />
-              <Route path="/buttons" element={<Buttons />} />
-
-              {/* <Route path="/signin" element={<SignIn />} />
-          <Route path="/signup" element={<SignUp />} /> */}
+            <Route element={<PublicRoute />}>
+              <Route path="/signin" element={<SignIn />} />
+              <Route path="/signup" element={<SignUp />} />
             </Route>
-            {/* </Route> */}
+            {/* Dashboard Layout */}
+            <Route element={<ProtectedRoute />}>
+              <Route element={<AppLayout />}>
+                <Route index path="/" element={<Home />} />
+                <Route index path="/customer" element={<Customer />} />
+                <Route path="/customer/add" element={<AddCustomer />} />
+                <Route path="/customer/edit/:id" element={<AddCustomer />} />
+                <Route
+                  path="/customer/:id/statement"
+                  element={<StatementOfAccounts />}
+                />
 
-            {/* Auth Layout */}
-            <Route path="/signin" element={<SignIn />} />
-            <Route path="/signup" element={<SignUp />} />
+                <Route index path="/company/add" element={<AddCompany />} />
+
+                <Route index path="/inventory" element={<Inventory />} />
+                <Route path="/inventory/add" element={<AddInventory />} />
+                <Route path="/inventory/edit/:id" element={<AddInventory />} />
+
+                <Route index path="/estimate" element={<Estimate />} />
+                <Route path="/estimate/add" element={<AddEstimate />} />
+                <Route path="/estimate/edit/:id" element={<AddEstimate />} />
+                <Route path="/estimate/view/:id" element={<EstimateView />} />
+                {/* <Route path="/estimate/download/:id" element={<EstimateDownload />} /> */}
+
+                <Route index path="/invoice" element={<Invoice />} />
+                <Route path="/invoice/add" element={<AddInvoice />} />
+                <Route path="/invoice/edit/:id" element={<AddInvoice />} />
+                <Route path="/invoice/view/:id" element={<InvoiceView />} />
+
+                {/* Payment */}
+                <Route index path="/payment" element={<Payment />} />
+                <Route path="/payment/add" element={<AddPayment />} />
+                <Route path="/payment/edit/:id" element={<AddPayment />} />
+
+                {/* Others Page */}
+                <Route path="/profile" element={<UserProfiles />} />
+                <Route path="/settings" element={<Settings />} />
+
+                <Route path="/blank" element={<Blank />} />
+
+                {/* Forms */}
+                <Route path="/form-elements" element={<FormElements />} />
+
+                {/* Tables */}
+                <Route path="/basic-tables" element={<BasicTables />} />
+
+                {/* Ui Elements */}
+                <Route path="/alerts" element={<Alerts />} />
+                <Route path="/badge" element={<Badges />} />
+                <Route path="/buttons" element={<Buttons />} />
+              </Route>
+            </Route>
 
             {/* Fallback Route */}
             <Route path="*" element={<NotFound />} />

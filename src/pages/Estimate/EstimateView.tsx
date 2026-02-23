@@ -3,7 +3,7 @@ import endPointApi from "../../utils/endPointApi";
 import { api } from "../../utils/axiosInstance";
 import { useNavigate, useParams } from "react-router";
 import { toast } from "react-toastify";
-import { MoveLeft } from "lucide-react";
+import { FileText, MoveLeft } from "lucide-react";
 import { numberToWords } from "../../utils/helper";
 
 type BankDetails = {
@@ -67,32 +67,32 @@ export default function EstimateView() {
 
   const [company, setCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
- 
+
   useEffect(() => {
-  const fetchCompany = async () => {
-    try {
-      const res = await api.get(endPointApi.getAllCompany);
+    const fetchCompany = async () => {
+      try {
+        const res = await api.get(endPointApi.getAllCompany);
 
-      if (res.data.success && res.data.data.length > 0) {
-        const raw = res.data.data[0];
+        if (res.data.success && res.data.data.length > 0) {
+          const raw = res.data.data[0];
 
-        const parsedCompany: Company = {
-          ...raw,
-          bank_details:
-            typeof raw.bank_details === "string"
-              ? JSON.parse(raw.bank_details)
-              : raw.bank_details,
-        };
+          const parsedCompany: Company = {
+            ...raw,
+            bank_details:
+              typeof raw.bank_details === "string"
+                ? JSON.parse(raw.bank_details)
+                : raw.bank_details,
+          };
 
-        setCompany(parsedCompany);
+          setCompany(parsedCompany);
+        }
+      } catch (error) {
+        console.error("Failed to fetch company:", error);
       }
-    } catch (error) {
-      console.error("Failed to fetch company:", error);
-    }
-  };
+    };
 
-  fetchCompany();
-}, []);
+    fetchCompany();
+  }, []);
 
   useEffect(() => {
     if (!id) return;
@@ -128,7 +128,7 @@ export default function EstimateView() {
       } catch (error) {
         toast.error("Failed to load estimate");
         console.error(error);
-      }finally {
+      } finally {
         setLoading(false);
       }
     };
@@ -136,7 +136,7 @@ export default function EstimateView() {
     fetchEstimate();
   }, [id]);
 
-    if (loading) {
+  if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-white">
         <div className="flex flex-col items-center">
@@ -147,6 +147,16 @@ export default function EstimateView() {
     );
   }
 
+  const handleConvertToInvoice = () => {
+    // so the Add Invoice page can pre-fill itself
+    navigate("/invoice/add", {
+      state: {
+        fromEstimate: true,
+        estimateNumber: formData.estimateNumber,
+      },
+    });
+  };
+  console.log("formData", formData);
   return (
     <>
       <div className="mb-4">
@@ -183,7 +193,11 @@ export default function EstimateView() {
 
             {/* Invoice Type */}
             <div className="flex justify-end">
-              <img src="/images/logo/Icon1.png" alt="Logo" className="h-60 w-60" />
+              <img
+                src="/images/logo/Icon1.png"
+                alt="Logo"
+                className="h-60 w-60"
+              />
             </div>
           </div>
 
@@ -198,7 +212,7 @@ export default function EstimateView() {
                 <span className="font-semibold w-40">Estimate Date:</span>
                 <span>
                   {formData.date
-                    ? new Date(formData.date).toLocaleDateString('en-GB')
+                    ? new Date(formData.date).toLocaleDateString("en-GB")
                     : ""}
                 </span>
               </div>
@@ -237,6 +251,15 @@ export default function EstimateView() {
             </div>
           </div>
 
+        <button
+          onClick={handleConvertToInvoice}
+          className="flex items-center mb-2 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg font-semibold transition-colors shadow-md"
+        >
+          <span className="mr-2">
+            <FileText size={18} />
+          </span>
+          Convert to Invoice
+        </button>
           {/* Horizontal Line after second part */}
           <div className="border-t-1 border-black"></div>
         </div>
@@ -254,17 +277,6 @@ export default function EstimateView() {
                 <th className="text-left p-2 text-sm font-bold">Quantity</th>
                 <th className="text-left p-2 text-sm font-bold">Rate</th>
                 <th className="text-left p-2 text-sm font-bold">Tax</th>
-                {/* <th className="text-left p-2 text-sm font-bold">IGST (₹)</th> */}
-                {/* {formData.state === "Gujarat" && (
-                  <>
-                    <th className="text-left p-2 text-sm font-bold">
-                      CGST (₹)
-                    </th>
-                    <th className="text-left p-2 text-sm font-bold">
-                      SGST (₹)
-                    </th>
-                  </>
-                )} */}
                 {formData.state === "Gujarat" ? (
                   <>
                     <th className="text-left p-2 text-sm font-bold">
@@ -286,7 +298,9 @@ export default function EstimateView() {
                   <td className="p-2 text-sm align-top">{index + 1}</td>
                   <td className="p-2 text-sm align-top whitespace-pre-line">
                     {/* {item.item?.name} */}
-                    {item.description ? `${item.description}` : ""}
+                    {item.description
+                      ? `${item.item?.name} - ${item.description}`
+                      : ""}
                   </td>
                   <td className="p-2 text-sm align-top">{item.item?.hsn}</td>
                   <td className="p-2 text-sm align-top">{item.qty}</td>
@@ -321,7 +335,9 @@ export default function EstimateView() {
           <div className="mt-16">
             <h3 className="font-bold mb-2">Bank Details</h3>
             <p className="text-sm">Name: {company?.company_name}</p>
-            <p className="text-sm">Account No: {company?.bank_details?.account_number}</p>
+            <p className="text-sm">
+              Account No: {company?.bank_details?.account_number}
+            </p>
             <p className="text-sm">Bank: {company?.bank_details?.bank_name}</p>
             <p className="text-sm">ISFC: {company?.bank_details?.ifsc_code}</p>
             <p className="text-sm">Branch: {company?.bank_details?.branch}</p>

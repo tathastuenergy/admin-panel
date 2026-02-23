@@ -54,13 +54,17 @@ interface CompanyResponse {
   website: string;
   phone_number: string;
   email: string;
-  company_logo?: string;
+  company_logo?: {
+    url: string;
+    public_id: string;
+  };
+
   bank_details?: string | BankDetails;
 }
 
 export default function UserProfiles() {
   const { isFormEnabled } = useForm();
-  
+
   const [formData, setFormData] = useState<CompanyFormData>({
     company_name: "",
     company_logo: null,
@@ -101,7 +105,7 @@ export default function UserProfiles() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!isProfileEnabled) return;
-    
+
     const file = e.target.files?.[0] || null;
 
     setFormData((prev) => ({
@@ -127,7 +131,7 @@ export default function UserProfiles() {
 
   const handleRemoveLogo = () => {
     if (!isProfileEnabled) return;
-    
+
     setFormData((prev) => ({
       ...prev,
       company_logo: null,
@@ -137,10 +141,12 @@ export default function UserProfiles() {
   };
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
   ) => {
     if (!isProfileEnabled) return;
-    
+
     const { name, value } = e.target;
 
     if (name === "phone_number" || name === "pincode") {
@@ -162,7 +168,7 @@ export default function UserProfiles() {
 
   const handleCityChange = (value: string) => {
     if (!isProfileEnabled) return;
-    
+
     const state = getStateFromCity(value);
 
     setFormData((prev) => ({
@@ -207,7 +213,7 @@ export default function UserProfiles() {
       newErrors.gst_number = "GST number is required";
     } else if (
       !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(
-        formData.gst_number
+        formData.gst_number,
       )
     ) {
       newErrors.gst_number = "Enter a valid GST number";
@@ -301,7 +307,7 @@ export default function UserProfiles() {
           bank_name: formData.bank_name,
           ifsc_code: formData.ifsc_code,
           branch: formData.branch,
-        })
+        }),
       );
 
       if (formData.company_logo) {
@@ -314,13 +320,13 @@ export default function UserProfiles() {
           data,
           {
             headers: { "Content-Type": "multipart/form-data" },
-          }
+          },
         );
 
         if (res.data.success) {
           toast.success("Company updated successfully");
         }
-      }  else {
+      } else {
         const res = await api.post(endPointApi.createCompany, data, {
           headers: { "Content-Type": "multipart/form-data" },
         });
@@ -350,9 +356,10 @@ export default function UserProfiles() {
       try {
         setLoading(true);
 
-        const res = await api.get<{ success: boolean; data: CompanyResponse[] }>(
-          endPointApi.getAllCompany
-        );
+        const res = await api.get<{
+          success: boolean;
+          data: CompanyResponse[];
+        }>(endPointApi.getAllCompany);
 
         if (
           res.data.success &&
@@ -395,9 +402,9 @@ export default function UserProfiles() {
             branch: bank_details?.branch || "",
           }));
 
-          if (company.company_logo) {
-            setExistingLogoUrl(company.company_logo);
-            setLogoPreview(company.company_logo);
+          if (company.company_logo?.url) {
+            setExistingLogoUrl(company.company_logo?.url);
+            setLogoPreview(company.company_logo?.url);
           }
 
           setIsEdit(true);
@@ -422,12 +429,16 @@ export default function UserProfiles() {
       <PageBreadcrumb pageTitle="Profile" />
       <ComponentCard title={companyId ? "Edit Company" : "Add Company"}>
         {loading && <Loader src="/loader.mp4" fullScreen />}
-        
+
         {/* Status Banner */}
         {!isProfileEnabled && (
           <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
             <p className="text-sm text-yellow-800 dark:text-yellow-200">
-              <span className="font-semibold">⚠️ Profile Editing Disabled:</span> Please enable profile editing from the Settings page to make changes.
+              <span className="font-semibold">
+                ⚠️ Profile Editing Disabled:
+              </span>{" "}
+              Please enable profile editing from the Settings page to make
+              changes.
             </p>
           </div>
         )}
@@ -440,7 +451,11 @@ export default function UserProfiles() {
                 <Label>Company Name</Label>
                 <Input
                   type="text"
-                  className={errors.company_name ? "border-red-500 focus:ring-red-200" : ""}
+                  className={
+                    errors.company_name
+                      ? "border-red-500 focus:ring-red-200"
+                      : ""
+                  }
                   name="company_name"
                   value={formData.company_name}
                   onChange={handleChange}
@@ -459,14 +474,18 @@ export default function UserProfiles() {
                 <Input
                   type="text"
                   name="gst_number"
-                  className={errors.gst_number ? "border-red-500 focus:ring-red-200" : ""}
+                  className={
+                    errors.gst_number ? "border-red-500 focus:ring-red-200" : ""
+                  }
                   value={formData.gst_number}
                   onChange={handleChange}
                   placeholder="Enter GST number"
                   disabled={!isProfileEnabled}
                 />
                 {errors.gst_number && (
-                  <p className="text-red-500 text-sm mt-1">{errors.gst_number}</p>
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.gst_number}
+                  </p>
                 )}
               </div>
 
@@ -475,7 +494,11 @@ export default function UserProfiles() {
                 <Input
                   type="number"
                   name="phone_number"
-                  className={errors.phone_number ? "border-red-500 focus:ring-red-200" : ""}
+                  className={
+                    errors.phone_number
+                      ? "border-red-500 focus:ring-red-200"
+                      : ""
+                  }
                   value={formData.phone_number}
                   onChange={handleChange}
                   placeholder="Enter phone number"
@@ -495,7 +518,9 @@ export default function UserProfiles() {
                 <Input
                   type="email"
                   name="email"
-                  className={errors.email ? "border-red-500 focus:ring-red-200" : ""}
+                  className={
+                    errors.email ? "border-red-500 focus:ring-red-200" : ""
+                  }
                   value={formData.email}
                   onChange={handleChange}
                   placeholder="Enter email"
@@ -511,7 +536,9 @@ export default function UserProfiles() {
                 <Input
                   type="text"
                   name="website"
-                  className={errors.website ? "border-red-500 focus:ring-red-200" : ""}
+                  className={
+                    errors.website ? "border-red-500 focus:ring-red-200" : ""
+                  }
                   value={formData.website}
                   onChange={handleChange}
                   placeholder="Enter website"
@@ -527,7 +554,9 @@ export default function UserProfiles() {
                 <Input
                   type="number"
                   name="pincode"
-                  className={errors.pincode ? "border-red-500 focus:ring-red-200" : ""}
+                  className={
+                    errors.pincode ? "border-red-500 focus:ring-red-200" : ""
+                  }
                   value={formData.pincode}
                   onChange={handleChange}
                   placeholder="Enter pincode"
@@ -543,7 +572,9 @@ export default function UserProfiles() {
               <Label>Address</Label>
               <TextArea
                 name="address"
-                className={errors.address ? "border-red-500 focus:ring-red-200" : ""}
+                className={
+                  errors.address ? "border-red-500 focus:ring-red-200" : ""
+                }
                 value={formData.address}
                 onChange={handleChange}
                 placeholder="Enter address"
@@ -559,7 +590,9 @@ export default function UserProfiles() {
                 <Label>City</Label>
                 <Select
                   options={cityOptions}
-                  className={errors.city ? "border-red-500 focus:ring-red-200" : ""}
+                  className={
+                    errors.city ? "border-red-500 focus:ring-red-200" : ""
+                  }
                   showAddButton={true}
                   value={formData.city}
                   onChange={handleCityChange}
@@ -609,14 +642,20 @@ export default function UserProfiles() {
                 <Label>Account Name</Label>
                 <Input
                   name="account_name"
-                  className={errors.account_name ? "border-red-500 focus:ring-red-200" : ""}
+                  className={
+                    errors.account_name
+                      ? "border-red-500 focus:ring-red-200"
+                      : ""
+                  }
                   value={formData.account_name}
                   onChange={handleChange}
                   placeholder="Account holder name"
                   disabled={!isProfileEnabled}
                 />
                 {errors.account_name && (
-                  <p className="text-red-500 text-sm mt-1">{errors.account_name}</p>
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.account_name}
+                  </p>
                 )}
               </div>
 
@@ -624,14 +663,20 @@ export default function UserProfiles() {
                 <Label>Account Number</Label>
                 <Input
                   name="account_number"
-                  className={errors.account_number ? "border-red-500 focus:ring-red-200" : ""}
+                  className={
+                    errors.account_number
+                      ? "border-red-500 focus:ring-red-200"
+                      : ""
+                  }
                   value={formData.account_number}
                   onChange={handleChange}
                   placeholder="Account number"
                   disabled={!isProfileEnabled}
                 />
                 {errors.account_number && (
-                  <p className="text-red-500 text-sm mt-1">{errors.account_number}</p>
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.account_number}
+                  </p>
                 )}
               </div>
 
@@ -639,14 +684,18 @@ export default function UserProfiles() {
                 <Label>Bank Name</Label>
                 <Input
                   name="bank_name"
-                  className={errors.bank_name ? "border-red-500 focus:ring-red-200" : ""}
+                  className={
+                    errors.bank_name ? "border-red-500 focus:ring-red-200" : ""
+                  }
                   value={formData.bank_name}
                   onChange={handleChange}
                   placeholder="Bank name"
                   disabled={!isProfileEnabled}
                 />
                 {errors.bank_name && (
-                  <p className="text-red-500 text-sm mt-1">{errors.bank_name}</p>
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.bank_name}
+                  </p>
                 )}
               </div>
             </div>
@@ -656,14 +705,18 @@ export default function UserProfiles() {
                 <Label>IFSC Code</Label>
                 <Input
                   name="ifsc_code"
-                  className={errors.ifsc_code ? "border-red-500 focus:ring-red-200" : ""}
+                  className={
+                    errors.ifsc_code ? "border-red-500 focus:ring-red-200" : ""
+                  }
                   value={formData.ifsc_code}
                   onChange={handleChange}
                   placeholder="IFSC code"
                   disabled={!isProfileEnabled}
                 />
                 {errors.ifsc_code && (
-                  <p className="text-red-500 text-sm mt-1">{errors.ifsc_code}</p>
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.ifsc_code}
+                  </p>
                 )}
               </div>
 
@@ -672,7 +725,9 @@ export default function UserProfiles() {
                 <Input
                   name="branch"
                   value={formData.branch}
-                  className={errors.branch ? "border-red-500 focus:ring-red-200" : ""}
+                  className={
+                    errors.branch ? "border-red-500 focus:ring-red-200" : ""
+                  }
                   onChange={handleChange}
                   placeholder="Branch name"
                   disabled={!isProfileEnabled}
@@ -722,7 +777,11 @@ export default function UserProfiles() {
                       Change Logo
                       <input
                         type="file"
-                        className={errors.company_logo ? "border-red-500 focus:ring-red-200" : "hidden"}
+                        className={
+                          errors.company_logo
+                            ? "border-red-500 focus:ring-red-200"
+                            : "hidden"
+                        }
                         onChange={handleFileChange}
                         accept="image/jpeg,image/png,image/webp"
                         disabled={!isProfileEnabled}
@@ -735,23 +794,27 @@ export default function UserProfiles() {
                   <Input
                     type="file"
                     onChange={handleFileChange}
-                    className={errors.company_logo ? "border-red-500 focus:ring-red-200" : "cursor-pointer"}
+                    className={
+                      errors.company_logo
+                        ? "border-red-500 focus:ring-red-200"
+                        : "cursor-pointer"
+                    }
                     disabled={!isProfileEnabled}
                   />
                 </div>
               )}
 
               {errors.company_logo && (
-                <p className="text-red-500 text-sm mt-1">{errors.company_logo}</p>
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.company_logo}
+                </p>
               )}
             </div>
           </div>
         </div>
 
         <div className="flex justify-end gap-3 mt-8 border-t pt-5">
-          <button
-            className={`px-5 py-2 border rounded hover:bg-gray-100 `}
-          >
+          <button className={`px-5 py-2 border rounded hover:bg-gray-100 `}>
             Cancel
           </button>
           <button

@@ -218,7 +218,7 @@ const AddCustomer = () => {
             name="mobile"
             value={formData.mobile}
             onChange={handleChange}
-            maxLength={10}
+            max={10}
             inputMode="numeric"
             placeholder="Enter 10-digit mobile number"
           />

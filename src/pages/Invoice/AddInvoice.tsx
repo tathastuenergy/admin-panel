@@ -5,7 +5,7 @@ import React, { useEffect, useState } from "react";
 import Input from "../../components/form/input/InputField";
 import Label from "../../components/form/Label";
 import ComponentCard from "../../components/common/ComponentCard";
-import { useNavigate, useParams } from "react-router";
+import { useLocation, useNavigate, useParams } from "react-router";
 import { toast } from "react-toastify";
 import endPointApi from "../../utils/endPointApi";
 import { api } from "../../utils/axiosInstance";
@@ -55,7 +55,10 @@ const AddInvoice = () => {
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
   const [isInventoryModalOpen, setIsInventoryModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const location = useLocation();
+  const preFilledData = location.state;
 
+  console.log("preFilledData", preFilledData);
   /* -------------------- HANDLERS -------------------- */
 
   const handleChange = (e) => {
@@ -115,29 +118,22 @@ const AddInvoice = () => {
     });
   };
 
-  // Remove any other duplicate declaration
+  const fetchEstimateDetails = async (orderNo) => {
+    if (!orderNo) return;
 
-  const handleOrderNumberEnter = async (e) => {
-    if (e.key !== "Enter") return;
-    e.preventDefault();
+    try {
+      const res = await api.get(`${endPointApi.estimateByNumber}/${orderNo}`);
+      const estimate = res.data.data;
 
-    const orderNumber = formData.orderNumber.trim();
-    if (!orderNumber) return;
+      if (!estimate) {
+        toast.error("No estimate found");
+        setFormData((prev) => ({ ...prev, orderNumber: "" }));
+        return;
+      }
 
-    const res = await api.get(`${endPointApi.estimateByNumber}/${orderNumber}`);
-    const estimate = res.data.data;
-    if (!estimate) {
-      toast.error("No estimate found");
-
-      // Clear the order number field if no match
       setFormData((prev) => ({
         ...prev,
-        orderNumber: "",
-      }));
-      return;
-    } else {
-      setFormData((prev) => ({
-        ...prev,
+        orderNumber: orderNo,
         customerId: estimate.customerId?.id || prev.customerId,
         state: estimate.customerId?.state || prev.state,
         date: estimate.date ? new Date(estimate.date) : prev.date,
@@ -147,11 +143,67 @@ const AddInvoice = () => {
             description: i.description || "",
             qty: i.qty || 0,
             rate: i.rate || 0,
-            taxRate: i.taxRate || 0,
+            taxRate: String(i.taxRate) || "0",
           })) || prev.items,
       }));
+
+      setErrors({});
+    } catch (error) {
+      console.error("Error fetching estimate:", error);
+      toast.error("Error loading estimate data");
     }
   };
+
+  // Remove any other duplicate declaration
+
+  // const handleOrderNumberEnter = async (e) => {
+  //   if (e.key !== "Enter") return;
+  //   e.preventDefault();
+
+  //   const orderNumber = formData.orderNumber.trim();
+  //   if (!orderNumber) return;
+
+  //   const res = await api.get(`${endPointApi.estimateByNumber}/${orderNumber}`);
+  //   const estimate = res.data.data;
+  //   if (!estimate) {
+  //     toast.error("No estimate found");
+
+  //     // Clear the order number field if no match
+  //     setFormData((prev) => ({
+  //       ...prev,
+  //       orderNumber: "",
+  //     }));
+  //     return;
+  //   } else {
+  //     setFormData((prev) => ({
+  //       ...prev,
+  //       customerId: estimate.customerId?.id || prev.customerId,
+  //       state: estimate.customerId?.state || prev.state,
+  //       date: estimate.date ? new Date(estimate.date) : prev.date,
+  //       items:
+  //         estimate.items?.map((i) => ({
+  //           item: i.item?.id || "",
+  //           description: i.description || "",
+  //           qty: i.qty || 0,
+  //           rate: i.rate || 0,
+  //           taxRate: i.taxRate || 0,
+  //         })) || prev.items,
+  //     }));
+  //   }
+  // };
+  const handleOrderNumberEnter = async (e) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+
+    const orderNumber = formData.orderNumber.trim();
+    fetchEstimateDetails(orderNumber);
+  };
+
+  useEffect(() => {
+    if (preFilledData?.estimateNumber) {
+      fetchEstimateDetails(preFilledData.estimateNumber);
+    }
+  }, [preFilledData]);
 
   const addItem = () => {
     setFormData((prev) => ({
@@ -198,9 +250,7 @@ const AddInvoice = () => {
       if (!item.item) {
         newErrors[`item_${index}`] = "Item name required";
       }
-      if (!item.description) {
-        newErrors[`description_${index}`] = "Description is required";
-      }
+
       if (!item.qty || item.qty <= 0) {
         newErrors[`qty_${index}`] = "Quantity is required";
       }
@@ -230,11 +280,8 @@ const AddInvoice = () => {
         date: formData.date,
         state: formData.state,
         items: formData.items.map((item) => {
-          const selectedItem = inventoryData.find((p) => p.id === item.item);
           return {
-            description:
-              (selectedItem?.name || "") +
-              (item.description ? ` - ${item.description}` : ""),
+            description: item.description,
             item: item.item, // still just the ID
             qty: Number(item.qty),
             rate: Number(item.rate),
@@ -582,24 +629,11 @@ const AddInvoice = () => {
                 <Input
                   disabled={isFieldDisabled}
                   name="description"
-                  className={
-                    errors[`description_${index}`]
-                      ? "border-red-500 focus:ring-red-200"
-                      : ""
-                  }
                   placeholder="Description"
                   value={item.description}
                   onChange={(e) => handleItemChange(index, e)}
                 />
-                {isRowError && (
-                  <div className="min-h-[20px]">
-                    {errors[`description_${index}`] && (
-                      <p className="text-red-500 text-sm mt-1">
-                        {errors[`description_${index}`]}
-                      </p>
-                    )}
-                  </div>
-                )}
+                {isRowError && <div className="min-h-[20px]"></div>}
               </div>
 
               {/* Qty */}
@@ -722,7 +756,11 @@ const AddInvoice = () => {
         <div className="grid grid-cols-2 gap-4 max-w-full">
           {/* Left Side: Add Item Button */}
           <div className="flex items-start">
-            <button disabled={isFieldDisabled} onClick={addItem} className="primary-color-text">
+            <button
+              disabled={isFieldDisabled}
+              onClick={addItem}
+              className="primary-color-text"
+            >
               + Add Item
             </button>
           </div>

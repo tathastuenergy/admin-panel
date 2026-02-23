@@ -231,9 +231,7 @@ const AddEstimate = () => {
       if (!item.item) {
         newErrors[`item_${index}`] = "Item name required";
       }
-      if (!item.description) {
-        newErrors[`description_${index}`] = "Description is required";
-      }
+
       if (!item.qty || item.qty <= 0) {
         newErrors[`qty_${index}`] = "Quantity is required";
       }
@@ -260,11 +258,8 @@ const AddEstimate = () => {
         date: formData.date,
         state: formData.state,
         items: formData.items.map((item) => {
-          const selectedItem = inventoryData.find((p) => p.id === item.item);
           return {
-            description:
-              (selectedItem?.name || "") +
-              (item.description ? ` - ${item.description}` : ""),
+            description: item.description,
             item: item.item, // still just the ID
             qty: Number(item.qty),
             rate: Number(item.rate),
@@ -510,24 +505,11 @@ const AddEstimate = () => {
                   disabled={isFieldDisabled}
                   type="text"
                   name="description"
-                  className={
-                    errors[`description_${index}`]
-                      ? "border-red-500 focus:ring-red-200"
-                      : ""
-                  }
                   placeholder="Description"
                   value={item.description}
                   onChange={(e) => handleItemChange(index, e)}
                 />
-                {isRowError && (
-                  <div className="min-h-[20px]">
-                    {errors[`description_${index}`] && (
-                      <p className="text-red-500 text-sm mt-1">
-                        {errors[`description_${index}`]}
-                      </p>
-                    )}
-                  </div>
-                )}
+                {isRowError && <div className="min-h-[20px]"></div>}
               </div>
 
               {/* Qty Input Example */}

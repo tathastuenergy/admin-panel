@@ -29,7 +29,7 @@ const Invoice = () => {
         // Navigate only after data is confirmed
         navigate(`/invoice/view/${id}`);
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to fetch invoice details");
     } finally {
       setViewLoading(null);
@@ -67,14 +67,15 @@ const Invoice = () => {
       const res = await api.delete(`${endPointApi.deleteInvoice}/${id}`);
 
       if (res.data) {
-        toast.success(res.data.message);
+        toast.success(res.data.message || "Invoice deleted successfully");
         getInvoice(); // refresh list
         setShowDeleteModal(false);
         setDeleteId(null);
       }
     } catch (error) {
-      toast.error(error);
-      alert("Delete failed ❌");
+      const errorMsg = error?.response?.data?.message || "Delete failed";
+      toast.error(errorMsg);
+      setShowDeleteModal(false);
     }
   };
   return (

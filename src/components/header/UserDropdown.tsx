@@ -25,7 +25,7 @@ export default function UserDropdown() {
     company_name: "",
     email: "",
   });
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | any>(null);
 
   function toggleDropdown() {
     setIsOpen(!isOpen);
@@ -73,6 +73,7 @@ export default function UserDropdown() {
 
     fetchCompany();
   }, []);
+
   return (
     <div className="relative">
       <button
@@ -80,7 +81,7 @@ export default function UserDropdown() {
         className="flex items-center text-gray-700 dropdown-toggle dark:text-gray-400"
       >
         <span className="mr-3 overflow-hidden rounded-full h-11 w-11">
-          {logoPreview && <img src={logoPreview} alt="User" />}
+          {logoPreview && <img src={logoPreview.url} alt="User" />}
         </span>
 
         <span className="block mr-1 font-medium text-theme-sm">

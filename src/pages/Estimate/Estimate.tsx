@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Eye, Download, Edit, Trash2, Loader2 } from "lucide-react";
+import { Eye, Download, Edit, Trash2, Loader2, FileText } from "lucide-react";
 import { toast } from "react-toastify";
 import { api } from "../../utils/axiosInstance";
 import endPointApi from "../../utils/endPointApi";
@@ -43,7 +43,7 @@ const Estimate = () => {
   // const handleView = (id) => {
   //   navigate(`/estimate/view/${id}`);
   // };
- const handleView = async (id) => {
+  const handleView = async (id) => {
     try {
       setViewLoading(id); // Start loading for this specific button
       const res = await api.get(`${endPointApi.getByIdEstimate}/${id}`);
@@ -52,7 +52,7 @@ const Estimate = () => {
         // Navigate only after data is confirmed
         navigate(`/estimate/view/${id}`);
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to fetch estimate details");
     } finally {
       setViewLoading(null);
@@ -60,7 +60,7 @@ const Estimate = () => {
   };
 
   const handleDownload = (id) => {
-    setDownloadId(id)
+    setDownloadId(id);
     // navigate(`/estimate/download/${id}`);
   };
 
@@ -77,15 +77,24 @@ const Estimate = () => {
       const res = await api.delete(`${endPointApi.deleteEstimate}/${id}`);
 
       if (res.data) {
-        toast.success(res.data.message);
+        toast.success(res.data.message || "Estimate deleted successfully");
         getEstimates(); // refresh list
         setShowDeleteModal(false);
         setDeleteId(null);
       }
-    } catch (error: any) {
-      console.error(error.response?.data || error.message);
+    } catch (error) {
       toast.error(error.response?.data?.message || "Error deleting estimate");
     }
+  };
+
+  const handleConvertToInvoice = (estimateNumber) => {
+    // so the Add Invoice page can pre-fill itself
+    navigate("/invoice/add", {
+      state: {
+        fromEstimate: true,
+        estimateNumber: estimateNumber,
+      },
+    });
   };
 
   return (
@@ -142,12 +151,13 @@ const Estimate = () => {
                   </td>
                   <td className="border p-2">
                     <span
-                      className={`px-2 py-1 rounded text-xs font-semibold ${item.state === "Approved"
-                        ? "bg-green-100 text-green-800"
-                        : item.state === "Rejected"
-                          ? "bg-red-100 text-red-800"
-                          : "bg-yellow-100 text-yellow-800"
-                        }`}
+                      className={`px-2 py-1 rounded text-xs font-semibold ${
+                        item.state === "Approved"
+                          ? "bg-green-100 text-green-800"
+                          : item.state === "Rejected"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-yellow-100 text-yellow-800"
+                      }`}
                     >
                       {item.state}
                     </span>
@@ -159,16 +169,15 @@ const Estimate = () => {
                       {/* View */}
                       <button
                         onClick={() => handleView(item.id)}
-                      disabled={viewLoading === item.id}
-
+                        disabled={viewLoading === item.id}
                         className="p-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
                         title="View"
                       >
-                         {viewLoading === item.id ? (
-                        <Loader2 className="animate-spin h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
+                        {viewLoading === item.id ? (
+                          <Loader2 className="animate-spin h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
                       </button>
 
                       {/* Download */}
@@ -200,6 +209,40 @@ const Estimate = () => {
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
+                      {/* <button
+                        onClick={() => { handleConvertToInvoice(item?.estimateNumber) }}
+                        className="flex items-center mb-2 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg font-semibold transition-colors shadow-md"
+                      >
+                        <span className="mr-2">
+                          <FileText size={18} />
+                        </span>
+                        Convert to Invoice
+                      </button> */}
+
+                      <div className="relative group flex items-center justify-center">
+                        <button
+                          onClick={() =>
+                            handleConvertToInvoice(item?.estimateNumber)
+                          }
+                          className="flex items-center justify-center p-2 bg-green-50 text-green-600 border border-green-200 hover:bg-green-600 hover:text-white rounded-md transition-all duration-300 shadow-sm"
+                        >
+                          <FileText size={18} />
+                        </button>
+
+                        {/* Bottom Tooltip */}
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 opacity-0 group-hover:opacity-100 invisible group-hover:visible transition-all duration-200 ease-out transform group-hover:translate-y-0 -translate-y-1 pointer-events-none z-50">
+                          <div className="relative">
+                            <div className="absolute left-1/2 -translate-x-1/2 -top-1">
+                              <div className="w-2 h-2 rotate-45 bg-gray-900/95"></div>
+                            </div>
+                            <div className="px-3 py-1.5 primary-color backdrop-blur-sm rounded-md shadow-xl">
+                              <span className="text-xs font-medium text-white whitespace-nowrap">
+                                Convert to Invoice
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </td>
                 </tr>

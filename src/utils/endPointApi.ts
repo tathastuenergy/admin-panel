@@ -1,7 +1,8 @@
 export interface EndPointApi {
     login: string;
-    verifyOtp: string;
     register: string;
+    forgotPassword: string;
+    verifyOtp: string;
     logout: string;
     resendOtp: string;
 
@@ -53,10 +54,11 @@ export interface EndPointApi {
 
 // Define and export the API endpoint object
 const endPointApi: EndPointApi = {
-    login: 'auth/login/send-otp',
+    login: 'auth/login',
+    register: 'auth/register',
+    forgotPassword: "/auth/forgot-password",
     verifyOtp: 'auth/login/verify-otp',
     resendOtp: 'auth/login/resend-otp',
-    register: 'auth/register',
     logout: 'auth/logout',
 
     //Customers

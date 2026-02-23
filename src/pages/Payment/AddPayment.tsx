@@ -112,8 +112,8 @@ const AddPayment = () => {
           image: null,
         });
 
-        if (data.image) {
-          setImagePreview(data.image);
+        if (data.image?.url) {
+          setImagePreview(data.image?.url);
         }
       } catch (error) {
         toast.error("Failed to load payment details");

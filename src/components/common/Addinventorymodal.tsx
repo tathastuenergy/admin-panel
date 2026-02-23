@@ -198,9 +198,9 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl overflow-hidden">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b bg-gray-50">
+        <div className="flex items-center justify-between px-6 py-4 border-b bg-gray-50 flex-shrink-0">
           <h3 className="text-xl font-bold text-gray-800">Add New Inventory</h3>
           <button
             onClick={onClose}
@@ -211,7 +211,7 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({
         </div>
 
         {/* Modal Body */}
-        <div className="p-6 max-h-[70vh] overflow-y-auto">
+        <div className="p-10 overflow-visible flex-1">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
             {/* Inventory Name */}
             <div className="lg:col-span-2">
@@ -313,7 +313,7 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="flex justify-end items-center gap-3 px-6 py-4 border-t bg-gray-50">
+        <div className="flex justify-end items-center gap-3 px-6 py-4 border-t bg-gray-50 flex-shrink-0">
           <button
             onClick={handleClose}
             className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"

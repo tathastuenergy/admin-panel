@@ -44,14 +44,16 @@ const Customer = () => {
     try {
       const res = await api.delete(`${endPointApi.deleteCustomer}/${id}`);
 
-      if (res.data) {
-        toast.success(res.data.message);
+      if (res.data?.success) {
+        toast.success(res.data.message || "Customer deleted successfully");
         getCustomers(); // refresh list
         setShowDeleteModal(false);
         setDeleteId(null);
       }
     } catch (error) {
-      toast.error(error);
+      const errorMsg = error?.response?.data?.message || "Delete failed";
+      toast.error(errorMsg);
+      setShowDeleteModal(false);
     }
   };
 
@@ -103,9 +105,7 @@ const Customer = () => {
                   <td className="border p-2 text-center">{index + 1}</td>
                   <td
                     className="border p-2 text-blue-600 cursor-pointer hover:underline"
-                    onClick={() =>
-                      navigate(`/customer/${item.id}/statement`)
-                    }
+                    onClick={() => navigate(`/customer/${item.id}/statement`)}
                   >
                     {item.name}
                   </td>
