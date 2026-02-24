@@ -300,7 +300,7 @@ export default function EstimateView() {
                     {/* {item.item?.name} */}
                     {item.description
                       ? `${item.item?.name} - ${item.description}`
-                      : ""}
+                      : `${item.item?.name}`}
                   </td>
                   <td className="p-2 text-sm align-top">{item.item?.hsn}</td>
                   <td className="p-2 text-sm align-top">{item.qty}</td>

@@ -285,7 +285,7 @@ export default function EstimateDownload({
                 <tr key={index} className="border-b border-gray-300">
                   <td className="p-2 text-sm align-top">{index + 1}</td>
                   <td className="p-2 text-sm align-top whitespace-pre-line">
-                    {item.description ? `${item.item?.name} - ${item.description}` : ""}
+                    {item.description ? `${item.item?.name} - ${item.description}` : `${item.item?.name}`}
                   </td>
                   <td className="p-2 text-sm align-top">{item.item?.hsn}</td>
                   <td className="p-2 text-sm align-top">{item.qty}</td>

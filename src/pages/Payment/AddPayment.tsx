@@ -210,9 +210,9 @@ const AddPayment = () => {
     }
 
     // Invoice validation
-    if (!formData.invoiceId) {
-      newErrors.invoiceId = "Invoice is required";
-    }
+    // if (!formData.invoiceId) {
+    //   newErrors.invoiceId = "Invoice is required";
+    // }
 
     // Date validation
     if (!formData.date) {
@@ -349,9 +349,9 @@ const AddPayment = () => {
         {/* Invoice */}
 
         <div>
-          <Label>Invoice Number *</Label>
+          <Label>Invoice Number</Label>
           <Select
-            className={errors.invoiceId ? "border-red-500 focus:ring-red-200" : ""}
+            // className={errors.invoiceId ? "border-red-500 focus:ring-red-200" : ""}
             disabled={isFieldDisabled}
             options={invoiceOptions}
             value={formData.invoiceId}
@@ -368,9 +368,9 @@ const AddPayment = () => {
               }));
             }}
           />
-          {errors.invoiceId && (
+          {/* {errors.invoiceId && (
             <p className="text-red-500 text-sm mt-1">{errors.invoiceId}</p>
-          )}
+          )} */}
         </div>
 
         {/* Date */}

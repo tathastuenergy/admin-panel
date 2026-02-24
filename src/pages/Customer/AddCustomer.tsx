@@ -136,11 +136,11 @@ const AddCustomer = () => {
       newErrors.gst_number = "Enter a valid GST number";
     }
 
-    if (!formData.email) {
-      newErrors.email = "Email is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "Enter a valid email address";
-    }
+    // if (!formData.email) {
+    //   newErrors.email = "Email is required";
+    // } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    //   newErrors.email = "Enter a valid email address";
+    // }
 
     if (!formData.address) {
       newErrors.address = "Address is required";
@@ -232,16 +232,15 @@ const AddCustomer = () => {
           <Label>Email Address</Label>
           <Input
             disabled={isFieldDisabled}
-            className={errors.email ? "border-red-500 focus:ring-red-200" : ""}
             type="email"
             name="email"
             value={formData.email}
             onChange={handleChange}
             placeholder="Enter email address"
           />
-          {errors.email && (
+          {/* {errors.email && (
             <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-          )}
+          )} */}
         </div>
 
         {/* GST */}
