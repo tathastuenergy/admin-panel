@@ -258,7 +258,7 @@ export default function InvoiceView() {
         {/* Totals */}
         <div className="grid grid-cols-2 gap-8 mt-6">
           {/* Bank Details */}
-          <div className="mt-16">
+          <div className="mt-45">
             <h3 className="font-bold mb-2">Bank Details</h3>
             <p className="text-sm">Name: {company?.company_name}</p>
             <p className="text-sm">Account No: {company?.bank_details?.account_number}</p>
@@ -270,19 +270,19 @@ export default function InvoiceView() {
           <div>
             <div className="flex justify-between p-2 border-b">
               <span>Sub Total</span>
-              <span>₹ {formData.subTotal}.00</span>
+              <span>₹ {Math.floor(formData.subTotal)}.00</span>
             </div>
             <div className="flex justify-between p-2 border-b">
               <span>Total Tax</span>
-              <span>₹ {formData.totalTax}.00</span>
+              <span>₹ {Math.floor(formData.totalTax)}.00</span>
             </div>
             <div className="flex justify-between p-2 border-b-2 border-black">
               <span className="font-bold">Grand Total</span>
-              <span className="font-bold">₹ {formData.grandTotal}.00</span>
+              <span className="font-bold">₹ {Math.floor(formData.grandTotal)}.00</span>
             </div>
             <div className="p-2">
               <p className="text-sm font-semibold">Total In Words:</p>
-              <p className="text-sm">{numberToWords(formData.grandTotal)}</p>
+              <p className="text-sm">{numberToWords(Math.floor(formData.grandTotal))}</p>
             </div>
           </div>
         </div>

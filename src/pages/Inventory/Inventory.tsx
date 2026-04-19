@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import endPointApi from "../../utils/endPointApi";
@@ -7,15 +7,19 @@ import { api } from "../../utils/axiosInstance";
 import DeleteConfirmModal from "../../components/common/DeleteConfirmModal";
 import { Edit, Trash2 } from "lucide-react";
 import Loader from "../../components/common/Loader";
+import { AgGridTable } from "../../components/common/AgGridTable";
+import { ColDef } from "ag-grid-community";
+import { cn } from "../../utils/helper";
+import ExportButton from "../../components/common/ExportButton";
 
 const Inventory = () => {
   const navigate = useNavigate();
-  const [inventoryList, setInventoryList] = useState([]); // 'customers' માંથી 'inventoryList' નામ બદલ્યું વધુ સ્પષ્ટતા માટે
+  const [inventoryList, setInventoryList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
+  const fileInputRef = useRef(null);
 
-  // 🔹 Get all Inventory
   const getInventory = async () => {
     try {
       setLoading(true);
@@ -34,14 +38,13 @@ const Inventory = () => {
   useEffect(() => {
     getInventory();
   }, []);
-  
-  // 🔹 Delete inventory - Optimized to handle backend errors
+
   const handleDelete = async () => {
     if (!deleteId) return;
-
     try {
-      const res = await api.delete(`${endPointApi.deleteInventory}/${deleteId}`);
-
+      const res = await api.delete(
+        `${endPointApi.deleteInventory}/${deleteId}`,
+      );
       if (res.data?.success) {
         toast.success(res.data.message || "Inventory deleted successfully");
         setShowDeleteModal(false);
@@ -55,8 +58,6 @@ const Inventory = () => {
     }
   };
 
-  // ... Excel handlers ...
-  const fileInputRef = useRef(null);
   const handleExcelClick = () => fileInputRef.current.click();
 
   const handleExcelUpload = async (e) => {
@@ -65,6 +66,7 @@ const Inventory = () => {
     const formData = new FormData();
     formData.append("file", file);
     try {
+      setLoading(true);
       const res = await api.post(endPointApi.uploadExcelInventory, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
@@ -74,72 +76,123 @@ const Inventory = () => {
       }
     } catch {
       toast.error("Excel upload failed");
+    } finally {
+      setLoading(false);
     }
   };
 
-  return (
-    <div className="p-4">
-      {loading && <Loader src="/loader.mp4" fullScreen />}
-      
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Inventory List</h2>
-        <div className="flex gap-2">
-          <button onClick={handleExcelClick} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-            Excel Upload
-          </button>
-          <input type="file" ref={fileInputRef} className="hidden" accept=".xlsx,.xls" onChange={handleExcelUpload} />
-          <button onClick={() => navigate("/inventory/add")} className="primary-color text-white px-4 py-2 rounded">
-            + Add Inventory
-          </button>
-        </div>
-      </div>
+  const columnDefs = useMemo<ColDef[]>(
+    () => [
+      {
+        headerName: "Name",
+        field: "name",
+        filter: "agTextColumnFilter",
+        minWidth: 200,
+        cellRenderer: (params) => (
+          <span className="font-semibold text-gray-900 dark:text-gray-200">
+            {params.value || "N/A"}
+          </span>
+        ),
+      },
+      {
+        headerName: "HSN",
+        field: "hsn",
+        filter: "agTextColumnFilter",
+        width: 150,
+      },
+      {
+        headerName: "Tax (%)",
+        field: "tax",
+        width: 120,
+        valueFormatter: (params) => (params.value ? `${params.value}%` : "-"),
+      },
+      {
+        headerName: "Unit",
+        field: "unit",
+        width: 120,
+      },
+      {
+        headerName: "Actions",
+        width: 150,
+        pinned: "right",
+        filter: false,
+        sortable: false,
+        cellRenderer: (params) => {
+          const item = params.data;
+          return (
+            <div className="flex items-center gap-2 h-full">
+              <button
+                onClick={() => navigate(`/inventory/edit/${item.id}`)}
+                className="p-1.5 bg-amber-50 text-amber-600 border border-amber-200 rounded-lg hover:bg-amber-600 hover:text-white transition-all shadow-sm"
+                title="Edit"
+              >
+                <Edit className="h-4 w-4" />
+              </button>
 
-      <div className="overflow-x-auto">
-        <table className="w-full border border-gray-300">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="border p-2">Sr.</th>
-              <th className="border p-2">Name</th>
-              <th className="border p-2">Hsn</th>
-              <th className="border p-2">Tax</th>
-              <th className="border p-2">Unit</th>
-              <th className="border p-2">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {inventoryList.length === 0 && !loading ? (
-              <tr><td colSpan="6" className="text-center p-4">No inventory found</td></tr>
-            ) : (
-              inventoryList.map((item, index) => (
-                <tr key={item.id || index}>
-                  <td className="border p-2 text-center">{index + 1}</td>
-                  <td className="border p-2">{item.name}</td>
-                  <td className="border p-2">{item.hsn || "-"}</td>
-                  <td className="border p-2">{item.tax ? `${item.tax}%` : "-"}</td>
-                  <td className="border p-2">{item.unit}</td>
-                  <td className="border p-2 text-center space-x-2">
-                    <button
-                      onClick={() => navigate(`/inventory/edit/${item.id}`)}
-                      className="p-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => {
-                        setDeleteId(item.id);
-                        setShowDeleteModal(true);
-                      }}
-                      className="p-2 bg-red-600 text-white rounded hover:bg-red-700"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              <button
+                onClick={() => {
+                  setDeleteId(item.id);
+                  setShowDeleteModal(true);
+                }}
+                className="p-1.5 bg-red-50 text-red-600 border border-red-200 rounded-lg hover:bg-red-600 hover:text-white transition-all shadow-sm"
+                title="Delete"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+          );
+        },
+      },
+    ],
+    [navigate],
+  );
+
+  const exportCols = [
+    { header: "#", key: "id", width: 8, pdfWidth: 15 },
+    { header: "Name", key: "name", width: 30, pdfWidth: 44 },
+    { header: "HSN", key: "hsn", width: 35, pdfWidth: 58 },
+    { header: "TAX(%)", key: "tax", width: 20, pdfWidth: 32 },
+    { header: "UNIT", key: "unit", width: 20, pdfWidth: "auto" },
+  ];
+
+  return (
+    <div className="p-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
+      {loading && <Loader src="/loader.mp4" fullScreen />}
+
+      <AgGridTable
+        title="Inventory List"
+        rowData={inventoryList}
+        columnDefs={columnDefs}
+        addButton={
+          <div className="flex gap-3">
+            <button
+              onClick={handleExcelClick}
+              className="bg-green-50 text-green-700 border border-green-200 px-4 py-2 rounded-xl font-semibold shadow-sm hover:bg-green-600 hover:text-white transition-all"
+            >
+              Excel Upload
+            </button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              accept=".xlsx,.xls"
+              onChange={handleExcelUpload}
+            />
+            <button
+              onClick={() => navigate("/inventory/add")}
+              className="primary-color text-white px-4 py-2 rounded-xl font-semibold shadow-md hover:opacity-90 transition-all font-outfit"
+            >
+              + Add Inventory
+            </button>
+            <ExportButton
+              data={inventoryList}
+              filename="Inventory_List"
+              title="Inventory Directory"
+              columns={exportCols}
+            />
+          </div>
+        }
+      />
 
       <DeleteConfirmModal
         open={showDeleteModal}

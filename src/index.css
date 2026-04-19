@@ -795,9 +795,278 @@ span.flatpickr-weekday,
   @apply opacity-100;
 }
 
+.ag-theme-quartz {
+  --ag-border-color: var(--color-gray-200);
+  --ag-header-background-color: var(--color-gray-50);
+  --ag-header-foreground-color: var(--color-gray-700);
+  --ag-header-column-separator-color: transparent;
+  --ag-row-hover-color: var(--color-brand-25);
+  --ag-selected-row-background-color: var(--color-brand-50);
+  --ag-font-family: var(--font-outfit);
+  --ag-font-size: 14px;
+}
+
+.ag-theme-quartz .ag-header-cell {
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.025em;
+}
+
+.ag-theme-quartz .ag-cell {
+  display: flex;
+  align-items: center;
+  color: var(--color-gray-700);
+}
+
+.ag-theme-quartz .ag-row {
+  border-bottom: 1px solid var(--color-gray-100);
+}
+
+.ag-theme-quartz .ag-root-wrapper {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--color-gray-200);
+  box-shadow: var(--shadow-theme-sm);
+}
+
+.ag-theme-quartz .ag-paging-panel {
+  border-top: 1px solid var(--color-gray-200);
+  background-color: var(--color-white);
+  color: var(--color-gray-600);
+  font-weight: 500;
+}
+
 .primary-color {
   background: #292a6a;
 }
 .primary-color-text {
   color: #292a6a;
+}
+
+/* Custom Table Styling */
+.modern-grid .ag-root-wrapper {
+  border: none !important;
+  border-radius: 12px;
+}
+
+.modern-grid .ag-header {
+  background-color: #f8fafc !important; /* Slate 50 */
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.dark .modern-grid .ag-header {
+  background-color: #0f172a !important; /* Slate 900 */
+  border-bottom: 1px solid #1e293b !important;
+}
+
+.modern-grid .ag-row {
+  border-bottom: 1px solid #f1f5f9 !important;
+  transition: background-color 0.2s;
+}
+
+.dark .modern-grid .ag-row {
+  border-bottom: 1px solid #1e293b !important;
+}
+
+.modern-grid .ag-row-hover {
+  background-color: #f1f5f9 !important;
+}
+
+.dark .modern-grid .ag-row-hover {
+  background-color: #1e293b !important;
+}
+
+/* Hide vertical cell lines for a cleaner look */
+.modern-grid .ag-cell {
+  border-right: none !important;
+  display: flex;
+  align-items: center;
+}
+
+/* Custom Scrollbar for the grid */
+.modern-grid ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.modern-grid ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+/* When dark mode is active, override AG Grid theme */
+.dark .ag-theme-quartz {
+  --ag-background-color: #1e2535;
+  --ag-header-background-color: #0f172a;
+  --ag-odd-row-background-color: #1e2535;
+  --ag-even-row-background-color: #1e2535;
+  --ag-row-hover-color: #252d40;
+
+  /* ✅ Exact border color from screenshot */
+  --ag-border-color: #2a3550;
+  --ag-row-border-color: #2a3550;
+  --ag-cell-horizontal-border: solid 1px #2a3550;
+  --ag-header-column-separator-color: #2a3550;
+  --ag-header-column-separator-display: block;
+  --ag-header-column-separator-height: 100%;
+
+  /* ✅ Text */
+  --ag-foreground-color: #ffffff;
+  --ag-header-foreground-color: #ffffff;
+  --ag-secondary-foreground-color: #9ca3af;
+
+  --ag-input-focus-border-color: #2a3550;
+  --ag-range-selection-border-color: #2a3550;
+  --ag-input-border-color: #2a3550;
+  --ag-input-background-color: #0f172a;
+  --ag-modal-overlay-background-color: rgba(0, 0, 0, 0.5);
+  --ag-chip-background-color: #2a3550;
+  --ag-selected-row-background-color: #2c3e5a;
+  --ag-panel-background-color: #0f172a;
+  --ag-tool-panel-background-color: #0f172a;
+  --ag-menu-background-color: #1e2535;
+  --ag-checkbox-checked-color: #63b3ed;
+  --ag-scrollbar-thumb-color: #2a3550;
+  --ag-wrapper-border-radius: 12px;
+  --ag-border-radius: 12px;
+}
+
+/* ✅ Header */
+.dark .ag-theme-quartz .ag-header-cell::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 10%;
+  height: 80%;
+  width: 1px;
+  background-color: #2a3550;
+}
+
+.dark .ag-theme-quartz .ag-header-cell {
+  border-right: 1px solid #2a3550 !important;
+  color: #ffffff;
+}
+
+/* ✅ Header bottom border */
+.dark .ag-theme-quartz .ag-header {
+  border-bottom: 1px solid #2a3550 !important;
+}
+
+/* ✅ Force AG Grid to show column separators */
+.dark .ag-theme-quartz .ag-header-column-separator {
+  display: block !important;
+  background-color: #2a3550 !important;
+  width: 1px !important;
+}
+
+/* ✅ Outer wrapper border */
+.dark .ag-theme-quartz .ag-root-wrapper {
+  border: 1px solid #2a3550;
+  border-radius: 12px;
+  background-color: #1e2535;
+}
+
+/* ✅ Cell text */
+.dark .ag-theme-quartz .ag-cell {
+  color: #98a2b3;
+  border-right: 1px solid #2a3550 !important;
+}
+
+/* ✅ Icons */
+.dark .ag-theme-quartz .ag-icon {
+  color: #9ca3af;
+}
+
+/* ✅ Square checkbox */
+.dark .ag-theme-quartz .ag-checkbox-input-wrapper {
+  background-color: #1e2535;
+  border: 2px solid #2a3550;
+  border-radius: 4px !important;
+  width: 16px;
+  height: 16px;
+}
+
+.dark .ag-theme-quartz .ag-checkbox-input-wrapper.ag-checked {
+  background-color: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.dark .ag-theme-quartz .ag-checkbox-input-wrapper::after {
+  color: #ffffff;
+  font-size: 10px;
+}
+
+/* ✅ Row borders */
+.dark .ag-theme-quartz .ag-row {
+  border-bottom: 1px solid #2a3550;
+}
+
+/* ✅ Pagination */
+.dark .ag-theme-quartz .ag-paging-panel {
+  background-color: #0f172a;
+  border-top: 1px solid #2a3550;
+  color: #9ca3af;
+}
+
+.dark .ag-theme-quartz .ag-paging-panel button,
+.dark .ag-theme-quartz .ag-paging-panel span,
+.dark .ag-theme-quartz .ag-paging-page-summary-panel {
+  color: #9ca3af;
+}
+
+/* ✅ Page size dropdown */
+.dark .ag-theme-quartz .ag-picker-field-wrapper {
+  background-color: #1e2535;
+  border-color: #2a3550;
+  color: #9ca3af;
+}
+
+.dark .ag-theme-quartz select,
+.dark .ag-theme-quartz .ag-select .ag-picker-field-display {
+  background-color: #1e2535;
+  color: #9ca3af;
+  border-color: #2a3550;
+}
+
+/* ✅ Filter/column menu */
+.dark .ag-theme-quartz .ag-popup,
+.dark .ag-theme-quartz .ag-menu {
+  background-color: #1e2535;
+  border: 1px solid #2a3550;
+  color: #ffffff;
+}
+
+.dark .ag-theme-quartz .ag-menu-option-text {
+  color: #ffffff;
+}
+
+/* ✅ Body background */
+.dark .ag-theme-quartz .ag-center-cols-clipper,
+.dark .ag-theme-quartz .ag-body-viewport {
+  background-color: #1e2535;
+}
+
+/* ✅ Light mode - Sky Blue header */
+html:not(.dark) .ag-theme-quartz .ag-header {
+  background-color: #292a6a !important;
+  border-bottom: 1px solid #bae6fd !important;
+}
+html:not(.dark) .ag-theme-quartz .ag-header-cell {
+  background-color: #292a6a !important;
+  border-right: 1px solid #bae6fd !important;
+}
+
+html:not(.dark) .ag-theme-quartz .ag-header-cell::after {
+  background-color: #bae6fd;
+}
+
+/* ✅ Dark text on light sky header */
+html:not(.dark) .ag-theme-quartz .ag-header-cell-text {
+  color: #ffffff !important;
+  font-weight: 600;
+}
+
+/* ✅ Icons color */
+html  :not(.dark) .ag-theme-quartz .ag-header .ag-icon {
+  color: #ffffff !important;
 }

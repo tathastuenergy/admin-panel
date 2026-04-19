@@ -1,6 +1,6 @@
 // @ts-nocheck
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../utils/axiosInstance";
 import endPointApi from "../../utils/endPointApi";
@@ -8,7 +8,11 @@ import { toast } from "react-toastify";
 import DeleteConfirmModal from "../../components/common/DeleteConfirmModal";
 import { Edit, Trash2 } from "lucide-react";
 import Loader from "../../components/common/Loader";
+import { AgGridTable } from "../../components/common/AgGridTable";
+import { ColDef } from "ag-grid-community";
+import ExportButton from "../../components/common/ExportButton";
 
+// ─── Component ────────────────────────────────────────────────────────────────
 const Customer = () => {
   const navigate = useNavigate();
   const [customers, setCustomers] = useState([]);
@@ -21,13 +25,12 @@ const Customer = () => {
     try {
       setLoading(true);
       const res = await api.get(`${endPointApi.getAllCustomer}`);
-
       if (res.data?.success) {
         setCustomers(res.data.data || []);
       }
     } catch (error) {
       console.error(error);
-      alert("Failed to fetch customers ❌");
+      toast.error("Failed to fetch customers");
     } finally {
       setLoading(false);
     }
@@ -40,13 +43,11 @@ const Customer = () => {
   // 🔹 Delete customer
   const handleDelete = async (id: number | null) => {
     if (!id) return;
-
     try {
       const res = await api.delete(`${endPointApi.deleteCustomer}/${id}`);
-
       if (res.data?.success) {
         toast.success(res.data.message || "Customer deleted successfully");
-        getCustomers(); // refresh list
+        getCustomers();
         setShowDeleteModal(false);
         setDeleteId(null);
       }
@@ -57,92 +58,112 @@ const Customer = () => {
     }
   };
 
+  const exportCols = [
+    { header: "#", key: "id", width: 8, pdfWidth: 15 },
+    { header: "Customer Name", key: "name", width: 30, pdfWidth: 44 },
+    { header: "Email Address", key: "email", width: 35, pdfWidth: 58 },
+    { header: "Mobile", key: "mobile", width: 20, pdfWidth: 32 },
+    { header: "City", key: "city", width: 20, pdfWidth: "auto" },
+  ];
+
+  const columnDefs = useMemo<ColDef[]>(
+    () => [
+      {
+        headerName: "Name",
+        field: "name",
+        filter: "agTextColumnFilter",
+        minWidth: 200,
+        cellRenderer: (params) => (
+          <span
+            className="font-semibold text-blue-600 dark:text-brand-400 cursor-pointer hover:underline"
+            onClick={() => navigate(`/customer/${params.data.id}/statement`)}
+          >
+            {params.value || "N/A"}
+          </span>
+        ),
+      },
+      {
+        headerName: "Email",
+        field: "email",
+        filter: "agTextColumnFilter",
+        width: 200,
+        valueFormatter: (params) => params.value || "-",
+      },
+      {
+        headerName: "Mobile",
+        field: "mobile",
+        filter: "agTextColumnFilter",
+        width: 150,
+      },
+      {
+        headerName: "City",
+        field: "city",
+        filter: "agTextColumnFilter",
+        width: 150,
+      },
+      {
+        headerName: "Actions",
+        width: 150,
+        pinned: "right",
+        filter: false,
+        sortable: false,
+        cellRenderer: (params) => {
+          const item = params.data;
+          return (
+            <div className="flex items-center gap-2 h-full">
+              <button
+                onClick={() => navigate(`/customer/edit/${item.id}`)}
+                className="p-1.5 bg-amber-50 text-amber-600 border border-amber-200 rounded-lg hover:bg-amber-600 hover:text-white transition-all shadow-sm"
+                title="Edit"
+              >
+                <Edit className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => {
+                  setDeleteId(item.id);
+                  setShowDeleteModal(true);
+                }}
+                className="p-1.5 bg-red-50 text-red-600 border border-red-200 rounded-lg hover:bg-red-600 hover:text-white transition-all shadow-sm"
+                title="Delete"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+          );
+        },
+      },
+    ],
+    [navigate],
+  );
+
   return (
-    <div className="p-4">
+    <div className="p-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
       {loading && <Loader src="/loader.mp4" fullScreen />}
 
-      {/* Header */}
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Customer List</h2>
-        <button
-          onClick={() => navigate("/customer/add")}
-          className="primary-color text-white px-4 py-2 rounded hover:primary-color"
-        >
-          + Add Customer
-        </button>
-      </div>
+      <AgGridTable
+        // onGridReady={(params) => setGridApi(params.api)}
+        title="Customer List"
+        rowData={customers}
+        columnDefs={columnDefs}
+        addButton={
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate("/customer/add")}
+              className="flex items-center gap-2 primary-color text-white px-5 py-2.5 rounded-xl font-semibold shadow-md hover:opacity-90 transition-all font-outfit"
+            >
+              + Add Customer
+            </button>
+            
+            <ExportButton
+              data={customers}
+              filename="Customer_List"
+              title="Customer Directory"
+              columns={exportCols}
+            />
+          </div>
+        }
+      />
 
-      {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full border border-gray-300">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="border p-2">Sr.</th>
-              <th className="border p-2">Name</th>
-              <th className="border p-2">Email</th>
-              <th className="border p-2">Mobile</th>
-              <th className="border p-2">City</th>
-              <th className="border p-2">Action</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan="6" className="text-center p-4">
-                  Loading...
-                </td>
-              </tr>
-            ) : customers.length === 0 ? (
-              <tr>
-                <td colSpan="6" className="text-center p-4">
-                  No customers found
-                </td>
-              </tr>
-            ) : (
-              customers.map((item, index) => (
-                <tr key={item.id}>
-                  <td className="border p-2 text-center">{index + 1}</td>
-                  <td
-                    className="border p-2 text-blue-600 cursor-pointer hover:underline"
-                    onClick={() => navigate(`/customer/${item.id}/statement`)}
-                  >
-                    {item.name}
-                  </td>
-
-                  <td className="border p-2">{item.email || "-"}</td>
-                  <td className="border p-2">{item.mobile}</td>
-                  <td className="border p-2">{item.city}</td>
-
-                  {/* Actions */}
-                  <td className="border p-2 text-center space-x-2">
-                    {/* Edit */}
-                    <button
-                      onClick={() => navigate(`/customer/edit/${item.id}`)}
-                      className="p-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition"
-                      title="Edit"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </button>
-
-                    {/* Delete */}
-                    <button
-                      onClick={() => {
-                        setDeleteId(item.id);
-                        setShowDeleteModal(true);
-                      }}
-                      className="p-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
-                      title="Delete"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
       <DeleteConfirmModal
         open={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}

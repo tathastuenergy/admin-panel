@@ -281,7 +281,44 @@ import endPointApi from "../../utils/endPointApi";
 import EstimateDownload from "./EstimateDownload";
 import DeleteConfirmModal from "../../components/common/DeleteConfirmModal";
 import Loader from "../../components/common/Loader";
-import AgGridTable from "../../components/common/AgGridTable";
+import { AgGridTable } from "../../components/common/AgGridTable";
+import { cn } from "../../utils/helper";
+import ExportButton from "../../components/common/ExportButton";
+
+const initialCategories = [
+  {
+    id: 1,
+    name: "Electronics",
+    image:
+      "https://images.unsplash.com/photo-1498049794561-7780e7231661?w=100&h=100&fit=crop",
+    count: 124,
+    status: "Active",
+  },
+  {
+    id: 2,
+    name: "Fashion",
+    image:
+      "https://images.unsplash.com/photo-1445205170230-053b830c6050?w=100&h=100&fit=crop",
+    count: 85,
+    status: "Active",
+  },
+  {
+    id: 3,
+    name: "Home & Garden",
+    image:
+      "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=100&h=100&fit=crop",
+    count: 62,
+    status: "Inactive",
+  },
+  {
+    id: 4,
+    name: "Books",
+    image:
+      "https://images.unsplash.com/photo-1495446815901-a7297e633e8d?w=100&h=100&fit=crop",
+    count: 45,
+    status: "Active",
+  },
+];
 
 const Estimate = () => {
   const navigate = useNavigate();
@@ -301,6 +338,7 @@ const Estimate = () => {
       }
     } catch (error) {
       console.error(error);
+      toast.error("Failed to fetch estimates");
     } finally {
       setLoading(false);
     }
@@ -336,6 +374,7 @@ const Estimate = () => {
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Error deleting estimate");
+      setShowDeleteModal(false);
     }
   };
 
@@ -345,123 +384,162 @@ const Estimate = () => {
     });
   };
 
-  // 🔹 AG Grid Column Definitions
-  const columnDefs = useMemo(() => [
-    {
-      headerName: "Sr.",
-      valueGetter: (params) => params.node.rowIndex + 1,
-      width: 70,
-    },
-    {
-      headerName: "Customer Name",
-      field: "customerId.name",
-      filter: true,
-      flex: 1,
-    },
-    {
-      headerName: "Estimate Number",
-      field: "estimateNumber",
-      filter: true,
-    },
-    {
-      headerName: "Date",
-      field: "date",
-      valueFormatter: (params) => new Date(params.value).toLocaleDateString("en-GB"),
-    },
-    {
-      headerName: "State",
-      field: "state",
-      cellRenderer: (params) => {
-        const state = params.value;
-        const colorClass = state === "Approved" 
-          ? "bg-green-100 text-green-800" 
-          : state === "Rejected" 
-          ? "bg-red-100 text-red-800" 
-          : "bg-yellow-100 text-yellow-800";
-        
-        return (
-          <span className={`px-2 py-1 rounded text-xs font-semibold ${colorClass}`}>
-            {state}
+  // 🔹 Polished Column Definitions
+  const columnDefs = useMemo<ColDef[]>(
+    () => [
+      {
+        headerName: "Customer Name",
+        field: "customerId.name",
+        filter: "agTextColumnFilter",
+        minWidth: 200,
+        cellRenderer: (params) => (
+          <span className="font-semibold text-gray-900 dark:text-gray-200">
+            {params.value || "N/A"}
           </span>
-        );
-      }
-    },
-    {
-      headerName: "Actions",
-      width: 250,
-      pinned: 'right', // Keeps actions visible while scrolling
-      cellRenderer: (params) => {
-        const item = params.data;
-        return (
-          <div className="flex items-center gap-2 h-full">
-            <button
-              onClick={() => handleView(item.id)}
-              disabled={viewLoading === item.id}
-              className="p-1.5 bg-blue-500 text-white rounded hover:bg-blue-600"
-              title="View"
-            >
-              {viewLoading === item.id ? <Loader2 className="animate-spin h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
+        ),
+      },
+      {
+        headerName: "Estimate #",
+        field: "estimateNumber",
+        filter: "agTextColumnFilter",
+        width: 150,
+      },
+      {
+        headerName: "Date",
+        field: "date",
+        width: 130,
+        valueFormatter: (params) => {
+          if (!params.value) return "N/A";
+          return new Date(params.value).toLocaleDateString("en-GB");
+        },
+      },
+      {
+        headerName: "Status",
+        field: "state",
+        width: 130,
+        cellRenderer: (params) => {
+          const state = params.value;
+          const colorClass =
+            state === "Approved"
+              ? "bg-success-50 text-success-700 border-success-200"
+              : state === "Rejected"
+                ? "bg-error-50 text-error-700 border-error-200"
+                : "bg-warning-50 text-warning-700 border-warning-200";
 
-            <button
-              onClick={() => setDownloadId(item.id)}
-              className="p-1.5 bg-green-500 text-white rounded hover:bg-green-600"
-              title="Download"
+          return (
+            <span
+              className={cn(
+                "px-2.5 py-0.5 rounded-full text-xs font-bold border",
+                colorClass,
+              )}
             >
-              <Download className="h-4 w-4" />
-            </button>
+              {state || "Pending"}
+            </span>
+          );
+        },
+      },
+      {
+        headerName: "Actions",
+        width: 280,
+        pinned: "right",
+        filter: false,
+        sortable: false,
+        cellRenderer: (params: { data: any }) => {
+          const item = params.data;
+          return (
+            <div className="flex items-center gap-2 h-full">
+              <button
+                onClick={() => handleView(item.id)}
+                disabled={viewLoading === item.id}
+                className="p-1.5 bg-blue-50 text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+                title="View"
+              >
+                {viewLoading === item.id ? (
+                  <Loader2 className="animate-spin h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
 
-            <button
-              onClick={() => navigate(`/estimate/edit/${item.id}`)}
-              className="p-1.5 bg-yellow-500 text-white rounded hover:bg-yellow-600"
-              title="Edit"
-            >
-              <Edit className="h-4 w-4" />
-            </button>
+              <button
+                onClick={() => setDownloadId(item.id)}
+                className="p-1.5 bg-green-50 text-green-600 border border-green-200 rounded-lg hover:bg-green-600 hover:text-white transition-all shadow-sm"
+                title="Download"
+              >
+                <Download className="h-4 w-4" />
+              </button>
 
-            <button
-              onClick={() => {
-                setDeleteId(item.id);
-                setShowDeleteModal(true);
-              }}
-              className="p-1.5 bg-red-600 text-white rounded hover:bg-red-700"
-              title="Delete"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
+              <button
+                onClick={() => navigate(`/estimate/edit/${item.id}`)}
+                className="p-1.5 bg-amber-50 text-amber-600 border border-amber-200 rounded-lg hover:bg-amber-600 hover:text-white transition-all shadow-sm"
+                title="Edit"
+              >
+                <Edit className="h-4 w-4" />
+              </button>
 
-            <button
-              onClick={() => handleConvertToInvoice(item.estimateNumber)}
-              className="p-1.5 bg-green-50 text-green-600 border border-green-200 hover:bg-green-600 hover:text-white rounded"
-              title="Convert to Invoice"
-            >
-              <FileText size={18} />
-            </button>
-          </div>
-        );
-      }
-    }
-  ], [viewLoading]);
+              <button
+                onClick={() => {
+                  setDeleteId(item.id);
+                  setShowDeleteModal(true);
+                }}
+                className="p-1.5 bg-red-50 text-red-600 border border-red-200 rounded-lg hover:bg-red-600 hover:text-white transition-all shadow-sm"
+                title="Delete"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+
+              <button
+                onClick={() => handleConvertToInvoice(item.estimateNumber)}
+                className="p-1.5 bg-indigo-50 text-indigo-600 border border-indigo-200 rounded-lg hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
+                title="Convert to Invoice"
+              >
+                <FileText size={18} />
+              </button>
+            </div>
+          );
+        },
+      },
+    ],
+    [viewLoading, navigate],
+  );
+
+  const exportCols = [
+    { header: "#", key: "id", width: 8, pdfWidth: 15 },
+    { header: "Customer Name", key: "customerName", width: 30, pdfWidth: 44 },
+    { header: "Estimate #", key: "estimateNumber", width: 35, pdfWidth: 58 },
+    { header: "Date", key: "formattedDate", width: 20, pdfWidth: 32 },
+    { header: "Status", key: "state", width: 20, pdfWidth: "auto" },
+  ];
 
   return (
-    <div className="p-4">
+    <div className="p-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
       {loading && <Loader src="/loader.mp4" fullScreen />}
 
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Estimate List</h2>
-        <button
-          onClick={() => navigate("/estimate/add")}
-          className="primary-color text-white px-4 py-2 rounded"
-        >
-          + Add Estimate
-        </button>
-      </div>
-
-      {/* 🔹 Replaced simple table with your AgGridTable */}
       <AgGridTable
-        tableName="Estimates"
+        title="Estimate List"
         rowData={estimates}
-        columns={columnDefs}
+        columnDefs={columnDefs}
+        addButton={
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate("/estimate/add")}
+              className="flex items-center gap-2 primary-color text-white px-5 py-2.5 rounded-xl font-semibold shadow-md hover:opacity-90 transition-all"
+            >
+              + Add Estimate
+            </button>
+            <ExportButton
+              data={estimates.map((item, index) => ({
+                ...item,
+                id: index + 1,
+                customerName: item.customerId?.name || "N/A",
+                formattedDate: new Date(item.date).toLocaleDateString("en-GB"),
+              }))}
+              filename="Estimate_List"
+              title="Estimate Directory"
+              columns={exportCols}
+            />
+          </div>
+        }
       />
 
       {downloadId && (

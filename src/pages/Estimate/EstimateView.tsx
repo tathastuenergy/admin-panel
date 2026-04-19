@@ -159,7 +159,7 @@ export default function EstimateView() {
   console.log("formData", formData);
   return (
     <>
-      <div className="mb-4">
+      <div className="mb-4 flex justify-between mr-40">
         <button
           onClick={() => navigate("/estimate")} // goes back to previous page
           className="flex items-center text-blue-600 hover:text-blue-800 font-semibold"
@@ -168,6 +168,15 @@ export default function EstimateView() {
             <MoveLeft />
           </span>{" "}
           Back to Estimates
+        </button>
+        <button
+          onClick={handleConvertToInvoice}
+          className="flex items-center mb-2 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg font-semibold transition-colors shadow-md"
+        >
+          <span className="mr-2">
+            <FileText size={18} />
+          </span>
+          Convert to Invoice
         </button>
       </div>
       <div id="estimate-pdf" className="max-w-4xl mx-auto bg-white p-8">
@@ -196,7 +205,7 @@ export default function EstimateView() {
               <img
                 src="/images/logo/Icon1.png"
                 alt="Logo"
-                className="h-60 w-60"
+                className="h-40 w-40"
               />
             </div>
           </div>
@@ -251,15 +260,7 @@ export default function EstimateView() {
             </div>
           </div>
 
-        <button
-          onClick={handleConvertToInvoice}
-          className="flex items-center mb-2 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg font-semibold transition-colors shadow-md"
-        >
-          <span className="mr-2">
-            <FileText size={18} />
-          </span>
-          Convert to Invoice
-        </button>
+        
           {/* Horizontal Line after second part */}
           <div className="border-t-1 border-black"></div>
         </div>
@@ -332,7 +333,7 @@ export default function EstimateView() {
         {/* Total Section */}
         <div className="grid grid-cols-2 gap-8 mb-4">
           {/* Bank Details */}
-          <div className="mt-16">
+          <div className="mt-45">
             <h3 className="font-bold mb-2">Bank Details</h3>
             <p className="text-sm">Name: {company?.company_name}</p>
             <p className="text-sm">
@@ -347,21 +348,21 @@ export default function EstimateView() {
           <div>
             <div className="flex justify-between p-2 border-b border-gray-400">
               <span className="font-semibold">Sub Total</span>
-              <span>₹ {formData?.subTotal}.00</span>
+              <span>₹ {Math.floor(formData?.subTotal)}.00</span>
             </div>
             <div className="flex justify-between p-2 border-b border-gray-400">
               <span className="font-semibold">IGST @ 18%</span>
-              <span>₹ {formData?.totalTax}.00</span>
+              <span>₹ {Math.floor(formData?.totalTax)}.00</span>
             </div>
             <div className="flex justify-between p-2 border-b-2 border-black">
               <span className="font-bold text-lg">Total</span>
               <span className="font-bold text-lg">
-                ₹ {formData?.grandTotal}.00
+                ₹ {Math.floor(formData?.grandTotal)}.00
               </span>
             </div>
             <div className="p-2">
               <p className="text-sm font-semibold">Total In Words:</p>
-              <p className="text-sm"> {numberToWords(formData?.grandTotal)}</p>
+              <p className="text-sm"> {numberToWords(Math.floor(formData?.grandTotal))}</p>
             </div>
           </div>
         </div>

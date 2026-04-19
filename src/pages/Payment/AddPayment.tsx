@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useEffect, useState } from "react";
 import ComponentCard from "../../components/common/ComponentCard";
 import { useNavigate, useParams } from "react-router";
@@ -8,7 +9,7 @@ import { api } from "../../utils/axiosInstance";
 import endPointApi from "../../utils/endPointApi";
 import { toast } from "react-toastify";
 import Select from "../../components/form/Select";
-import { Upload, X, ZoomIn } from "lucide-react";
+import { Upload, X, ZoomIn, CreditCard, Receipt, Calendar, User, ClipboardList, FileText, Image as ImageIcon, ArrowLeft, Save, Info } from "lucide-react";
 import axios from "axios";
 import TextArea from "../../components/form/input/TextArea";
 import {
@@ -77,7 +78,7 @@ const AddPayment = () => {
     fetchCustomers();
   }, []);
 
-  // Fetch customers
+  // Fetch invoices
   useEffect(() => {
     const fetchInvoice = async () => {
       try {
@@ -149,16 +150,14 @@ const AddPayment = () => {
     const file = e.target.files?.[0];
 
     if (file) {
-      // Validate file size (max 5MB)
       if (file.size > 10 * 1024 * 1024) {
         setErrors((prev) => ({
           ...prev,
-          image: "Image size should be less than 5MB",
+          image: "Image size should be less than 10MB",
         }));
         return;
       }
 
-      // Validate file type
       const allowedTypes = [
         "image/jpeg",
         "image/jpg",
@@ -178,14 +177,12 @@ const AddPayment = () => {
         image: file,
       }));
 
-      // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
       };
       reader.readAsDataURL(file);
 
-      // Clear error
       setErrors((prev) => ({
         ...prev,
         image: "",
@@ -204,27 +201,15 @@ const AddPayment = () => {
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    // Customer validation
     if (!formData.customerId) {
       newErrors.customerId = "Customer is required";
     }
-
-    // Invoice validation
-    // if (!formData.invoiceId) {
-    //   newErrors.invoiceId = "Invoice is required";
-    // }
-
-    // Date validation
     if (!formData.date) {
       newErrors.date = "Date is required";
     }
-
-    // Payment mode validation
     if (!formData.paymentMode) {
       newErrors.paymentMode = "Payment mode is required";
     }
-
-    // Amount validation
     if (!formData.amount || formData.amount.trim() === "") {
       newErrors.amount = "Amount is required";
     } else if (Number(formData.amount) <= 0) {
@@ -232,8 +217,6 @@ const AddPayment = () => {
     } else if (isNaN(Number(formData.amount))) {
       newErrors.amount = "Amount must be a valid number";
     }
-
-    // Note validation (optional but if provided, should not be too long)
     if (formData.note && formData.note.length > 500) {
       newErrors.note = "Note should not exceed 500 characters";
     }
@@ -250,7 +233,6 @@ const AddPayment = () => {
     try {
       setLoading(true);
 
-      // Create FormData for file upload
       const formDataToSend = new FormData();
       formDataToSend.append("customerId", formData.customerId);
       formDataToSend.append("invoiceId", formData.invoiceId);
@@ -298,276 +280,318 @@ const AddPayment = () => {
     label: cust.name,
   }));
 
-  // Whenever the customer changes, filter invoices
   const invoices = allInvoices.filter(
     (inv) => inv.customerId?.id === formData.customerId,
   );
 
-  console.log("invoices", invoices, allInvoices);
   const invoiceOptions = invoices.map((inv) => ({
     value: inv.id,
     label: inv.invoiceNo,
   }));
 
   const paymentModeOptions = [
-    { value: "cash", label: "Cash" },
-    { value: "online", label: "Online" },
+    { value: "cash", label: "Cash Payment" },
+    { value: "online", label: "Online / Bank Transfer" },
   ];
 
   return (
-    <ComponentCard title={id ? "Edit Payment" : "Add Payment"}>
+    <div className="min-h-screen bg-gray-50/50 p-4 md:p-6 dark:bg-[#0f172a]">
       {loading && <Loader src="/loader.mp4" fullScreen />}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Customer Name */}
-        <div>
-          <Label>Customer Name *</Label>
-          <Select
-            className={errors.customerId ? "border-red-500 focus:ring-red-200" : ""}
-            disabled={isFieldDisabled}
-            options={customerOptions}
-            value={formData.customerId}
-            placeholder="Select Customer"
-            showAddButton={true}
-            onAddNew={() => navigate("/customer/add")}
-            addButtonText="Add New Customer"
-            onChange={(value) => {
-              setFormData((prev) => ({
-                ...prev,
-                customerId: value,
-              }));
-              setErrors((prev) => ({
-                ...prev,
-                customerId: "",
-              }));
-            }}
-          />
-          {errors.customerId && (
-            <p className="text-red-500 text-sm mt-1">{errors.customerId}</p>
-          )}
-        </div>
 
-        {/* Invoice */}
-
-        <div>
-          <Label>Invoice Number</Label>
-          <Select
-            // className={errors.invoiceId ? "border-red-500 focus:ring-red-200" : ""}
-            disabled={isFieldDisabled}
-            options={invoiceOptions}
-            value={formData.invoiceId}
-            placeholder="Select Invoice"
-            showAddButton={true}
-            onChange={(value) => {
-              setFormData((prev) => ({
-                ...prev,
-                invoiceId: value,
-              }));
-              setErrors((prev) => ({
-                ...prev,
-                invoiceId: "",
-              }));
-            }}
-          />
-          {/* {errors.invoiceId && (
-            <p className="text-red-500 text-sm mt-1">{errors.invoiceId}</p>
-          )} */}
-        </div>
-
-        {/* Date */}
-        <div>
-          <DatePicker
-            disabled={isFieldDisabled}
-            id="payment-date"
-            label="Payment Date *"
-            placeholder="Select date"
-            // minDate={new Date()}
-            defaultDate={formData.date ?? undefined}
-            onChange={(selectedDates) => {
-              setFormData((prev) => ({
-                ...prev,
-                date: selectedDates[0],
-              }));
-              setErrors((prev) => ({
-                ...prev,
-                date: "",
-              }));
-            }}
-          />
-          {errors.date && (
-            <p className="text-red-500 text-sm mt-1">{errors.date}</p>
-          )}
-        </div>
-
-        {/* Payment Mode */}
-        <div>
-          <Label>Payment Mode *</Label>
-          <Select
-            className={errors.paymentMode ? "border-red-500 focus:ring-red-200" : ""}
-            disabled={isFieldDisabled}
-            options={paymentModeOptions}
-            value={formData.paymentMode}
-            showAddButton={true}
-            placeholder="Select Payment Mode"
-            onChange={(value) => {
-              setFormData((prev) => ({
-                ...prev,
-                paymentMode: value as "cash" | "online",
-              }));
-              setErrors((prev) => ({
-                ...prev,
-                paymentMode: "",
-              }));
-            }}
-          />
-          {errors.paymentMode && (
-            <p className="text-red-500 text-sm mt-1">{errors.paymentMode}</p>
-          )}
-        </div>
-
-        {/* Amount */}
-        <div>
-          <Label>Amount *</Label>
-          <Input
-            className={errors.amount ? "border-red-500 focus:ring-red-200" : ""}
-            disabled={isFieldDisabled}
-            type="number"
-            name="amount"
-            value={formData.amount}
-            onChange={handleChange}
-            placeholder="Enter amount"
-            min="0"
-          />
-          {errors.amount && (
-            <p className="text-red-500 text-sm mt-1">{errors.amount}</p>
-          )}
-        </div>
-
-        {/* Note */}
-        <div className="md:col-span-2">
-          <Label>Note (Optional)</Label>
-          <TextArea
-            disabled={isFieldDisabled}
-            name="note"
-            value={formData.note}
-            onChange={handleChange}
-            placeholder="Add any additional notes..."
-            rows={6}
-          />
-          <div className="flex justify-between items-center mt-1">
-            {errors.note && (
-              <p className="text-red-500 text-sm">{errors.note}</p>
-            )}
+      <div className="max-w-6xl mx-auto">
+        {/* Header Section */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate("/payment")}
+              className="p-2.5 bg-white border border-gray-200 rounded-xl shadow-sm hover:bg-gray-50 transition-all text-gray-600"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 font-outfit dark:text-white">
+                {id ? "Edit Payment Record" : "Add Payment"}
+              </h1>
+              <p className="text-sm text-gray-500">
+                {id ? "Modify existing transaction details" : "Record a new payment received from a customer"}
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* Image Upload */}
-        <div className="">
-          <Label>Payment Receipt (Optional)</Label>
-          <div
-            className={`relative group ${isFieldDisabled ? "pointer-events-none opacity-60" : ""}`}
-          >
-            {imagePreview ? (
-              <div className="relative overflow-hidden rounded-xl shadow-lg">
-                <img
-                  src={imagePreview}
-                  alt="Preview"
-                  // Disable zoom click if form is disabled
-                  className={`w-32 h-32 object-cover transition-transform duration-200 ${
-                    isFieldDisabled
-                      ? "cursor-default"
-                      : "cursor-zoom-in hover:scale-105"
-                  }`}
-                  onClick={() => !isFieldDisabled && setIsZoomed(true)}
-                />
-
-                {/* Hide overlay icons in disabled mode */}
-                {!isFieldDisabled && (
-                  <>
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors pointer-events-none" />
-                    <div className="absolute bottom-2 left-2 bg-white/80 backdrop-blur-sm text-gray-600 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition pointer-events-none">
-                      <ZoomIn className="w-4 h-4" />
-                    </div>
-                    <button
-                      type="button" // Always specify button type
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeImage();
-                      }}
-                      className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm text-gray-800 p-1.5 rounded-full hover:bg-white transition shadow-md opacity-0 group-hover:opacity-100"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </>
-                )}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main Payment Details */}
+          <div className="lg:col-span-2 space-y-6">
+            <ComponentCard title="">
+              <div className="flex items-center gap-2 mb-6 pb-4 border-b border-gray-100 dark:border-[#2a3550]">
+                <div className="p-1.5 bg-blue-50 rounded-lg">
+                  <CreditCard className="h-5 w-5 text-blue-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-800 font-outfit dark:text-white">Transaction Information</h3>
               </div>
-            ) : (
-              <label
-                className={`flex flex-col items-center justify-center h-32 border-2 border-dashed rounded-xl transition-all duration-300 
-        ${
-          isFieldDisabled
-            ? "border-gray-200 bg-gray-50 cursor-not-allowed"
-            : "border-primary/30 cursor-pointer hover:border-primary hover:bg-primary/5 bg-muted/30"
-        }`}
-              >
-                <Upload
-                  className={`w-8 h-8 mb-2 ${isFieldDisabled ? "text-gray-300" : "text-primary/60"}`}
-                />
-                <p className="text-sm font-medium text-foreground/70">
-                  {isFieldDisabled ? "Upload Locked" : "Drop image here"}
-                </p>
-                {!isFieldDisabled && (
-                  <p className="text-xs text-muted-foreground">
-                    or click to browse
-                  </p>
-                )}
-                <input
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <Label className="text-gray-700 font-semibold mb-1.5 flex items-center gap-2">
+                    <User className="h-3.5 w-3.5 text-gray-400" /> Customer Name *
+                  </Label>
+                  <Select
+                    className={`${errors.customerId ? "border-red-500 focus:ring-red-200" : "focus:border-blue-400 focus:ring-blue-100"} rounded-xl transition-all h-[42px]`}
+                    disabled={isFieldDisabled}
+                    options={customerOptions}
+                    value={formData.customerId}
+                    placeholder="Select Customer"
+                    showAddButton={true}
+                    onAddNew={() => navigate("/customer/add")}
+                    addButtonText="Add New"
+                    onChange={(value) => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        customerId: value,
+                        invoiceId: "", // Reset invoice when customer changes
+                      }));
+                      setErrors((prev) => ({
+                        ...prev,
+                        customerId: "",
+                      }));
+                    }}
+                  />
+                  {errors.customerId && <p className="text-red-500 text-xs mt-1.5 font-medium ml-1">{errors.customerId}</p>}
+                </div>
+
+                <div>
+                  <Label className="text-gray-700 font-semibold mb-1.5 flex items-center gap-2">
+                    <ClipboardList className="h-3.5 w-3.5 text-gray-400" /> Invoice Number
+                  </Label>
+                  <Select
+                    disabled={isFieldDisabled || !formData.customerId}
+                    options={invoiceOptions}
+                    value={formData.invoiceId}
+                    placeholder={formData.customerId ? "Select Invoice (Optional)" : "Select customer first"}
+                    className="rounded-xl transition-all h-[42px] border-gray-200 focus:border-blue-400 focus:ring-blue-100"
+                    onChange={(value) => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        invoiceId: value,
+                      }));
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-gray-700 font-semibold mb-1.5 flex items-center gap-2">
+                    <Calendar className="h-3.5 w-3.5 text-gray-400" /> Payment Date *
+                  </Label>
+                  <DatePicker
+                    disabled={isFieldDisabled}
+                    id="payment-date"
+                    placeholder="Select date"
+                    defaultDate={formData.date ?? undefined}
+                    className={`${errors.date ? "border-red-500" : ""} rounded-xl transition-all`}
+                    onChange={(selectedDates) => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        date: selectedDates[0],
+                      }));
+                      setErrors((prev) => ({
+                        ...prev,
+                        date: "",
+                      }));
+                    }}
+                  />
+                  {errors.date && <p className="text-red-500 text-xs mt-1.5 font-medium ml-1">{errors.date}</p>}
+                </div>
+
+                <div>
+                  <Label className="text-gray-700 font-semibold mb-1.5 flex items-center gap-2">
+                    <CreditCard className="h-3.5 w-3.5 text-gray-400" /> Payment Mode *
+                  </Label>
+                  <Select
+                    className={`${errors.paymentMode ? "border-red-500" : "border-gray-200"} rounded-xl transition-all h-[42px] focus:border-blue-400 focus:ring-blue-100`}
+                    disabled={isFieldDisabled}
+                    searchable={false}
+                    options={paymentModeOptions}
+                    value={formData.paymentMode}
+                    placeholder="Select Mode"
+                    onChange={(value) => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        paymentMode: value as "cash" | "online",
+                      }));
+                      setErrors((prev) => ({
+                        ...prev,
+                        paymentMode: "",
+                      }));
+                    }}
+                  />
+                  {errors.paymentMode && <p className="text-red-500 text-xs mt-1.5 font-medium ml-1">{errors.paymentMode}</p>}
+                </div>
+
+                <div className="md:col-span-2">
+                  <Label className="text-gray-700 font-semibold mb-1.5 flex items-center gap-2">
+                    <Receipt className="h-3.5 w-3.5 text-gray-400" /> Amount Received *
+                  </Label>
+                  <div className="relative group">
+                    <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 font-bold">₹</div>
+                    <Input
+                      className={`${errors.amount ? "border-red-500 dark:border-red-500" : "border-gray-200 dark:border-[#2a3550]"} rounded-xl p-2.5 pl-8 transition-all w-full text-lg font-bold text-gray-700 focus:ring-blue-100 focus:border-blue-400`}
+                      disabled={isFieldDisabled}
+                      type="number"
+                      name="amount"
+                      value={formData.amount}
+                      onChange={handleChange}
+                      placeholder="0.00"
+                    />
+                  </div>
+                  {errors.amount && <p className="text-red-500 text-xs mt-1.5 font-medium ml-1">{errors.amount}</p>}
+                </div>
+              </div>
+            </ComponentCard>
+
+            <ComponentCard title="">
+              <div className="flex items-center gap-2 mb-6 pb-4 border-b border-gray-100 dark:border-[#2a3550]">
+                <div className="p-1.5 bg-amber-50 rounded-lg">
+                  <FileText className="h-5 w-5 text-amber-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-800 font-outfit dark:text-white">Additional Details</h3>
+              </div>
+              
+              <div>
+                <Label className="text-gray-700 font-semibold mb-1.5">Note (Optional)</Label>
+                <TextArea
                   disabled={isFieldDisabled}
-                  type="file"
-                  className="hidden"
-                  accept="image/*"
-                  onChange={handleImageChange}
+                  name="note"
+                  value={formData.note}
+                  onChange={handleChange}
+                  placeholder="Record bank reference, check number, or other details..."
+                  rows={4}
+                  className="rounded-xl border-gray-200 focus:border-blue-400 focus:ring-blue-100 transition-all resize-none"
                 />
-              </label>
-            )}
+                {errors.note && <p className="text-red-500 text-xs mt-1">{errors.note}</p>}
+              </div>
+            </ComponentCard>
           </div>
 
-          <Dialog open={isZoomed} onOpenChange={setIsZoomed}>
-            <DialogContent className="max-w-4xl p-2 bg-background/95 backdrop-blur-sm">
-              <VisuallyHidden>
-                <DialogTitle>Image Preview</DialogTitle>
-              </VisuallyHidden>
-              {imagePreview && (
-                <img
-                  src={imagePreview}
-                  alt="Zoomed Preview"
-                  className="w-full h-auto max-h-[80vh] object-contain rounded-lg"
-                />
+          {/* Right Column: Receipt Upload */}
+          <div className="space-y-6">
+            <ComponentCard title="">
+              <div className="flex items-center gap-2 mb-6 pb-4 border-b border-gray-100 dark:border-[#2a3550]">
+                <div className="p-1.5 bg-green-50 rounded-lg">
+                  <ImageIcon className="h-5 w-5 text-green-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-800 font-outfit dark:text-white">Proof of Payment</h3>
+              </div>
+
+              <div className="space-y-4">
+                <div
+                  className={`relative overflow-hidden group border-2 border-dashed rounded-3xl transition-all duration-300 min-h-[220px] flex items-center justify-center p-4 
+                    ${isFieldDisabled ? "bg-gray-50 border-gray-200 cursor-not-allowed" : 
+                      imagePreview ? "border-blue-200 bg-blue-50/10" : "border-gray-200 hover:border-blue-400 hover:bg-blue-50/10 cursor-pointer"}`}
+                >
+                  {imagePreview ? (
+                    <div className="relative w-full aspect-square max-w-[200px] overflow-hidden rounded-2xl shadow-md">
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        className={`w-full h-full object-cover transition-transform duration-300 ${!isFieldDisabled ? "cursor-zoom-in hover:scale-110" : ""}`}
+                        onClick={() => !isFieldDisabled && setIsZoomed(true)}
+                      />
+                      
+                      {!isFieldDisabled && (
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setIsZoomed(true)}
+                            className="p-2.5 bg-white text-gray-700 rounded-full hover:bg-gray-100 shadow-lg text-xs font-bold transition-all"
+                          >
+                            <ZoomIn className="w-5 h-5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={removeImage}
+                            className="p-2.5 bg-red-500 text-white rounded-full hover:bg-red-600 shadow-lg transition-all"
+                          >
+                            <X className="w-5 h-5" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <label className={`w-full flex flex-col items-center justify-center cursor-pointer ${isFieldDisabled ? "pointer-events-none" : ""}`}>
+                      <div className="p-4 bg-white rounded-2xl shadow-sm border border-gray-100 mb-4 group-hover:scale-110 transition-transform">
+                        <Upload className="w-8 h-8 text-blue-500" />
+                      </div>
+                      <p className="text-sm font-bold text-gray-700">Upload Receipt</p>
+                      <p className="text-xs text-gray-400 mt-1">PNG, JPG or WebP (Max 10MB)</p>
+                      <input
+                        disabled={isFieldDisabled}
+                        type="file"
+                        className="hidden"
+                        accept="image/*"
+                        onChange={handleImageChange}
+                      />
+                    </label>
+                  )}
+                </div>
+                {errors.image && <p className="text-red-500 text-xs text-center font-medium">{errors.image}</p>}
+                
+                <div className="bg-amber-50 rounded-2xl p-4 border border-amber-100">
+                  <div className="flex gap-3">
+                    <Info className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                    <p className="text-[11px] text-amber-700 leading-relaxed font-medium">
+                      Uploading a receipt proof helps in auditing and resolving transaction disputes later.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <Dialog open={isZoomed} onOpenChange={setIsZoomed}>
+                <DialogContent className="max-w-4xl p-2 bg-white/95 backdrop-blur-sm border-none shadow-2xl overflow-hidden rounded-3xl">
+                  <VisuallyHidden>
+                    <DialogTitle>Proof Image Preview</DialogTitle>
+                  </VisuallyHidden>
+                  {imagePreview && (
+                    <img
+                      src={imagePreview}
+                      alt="Zoomed Proof"
+                      className="w-full h-auto max-h-[85vh] object-contain rounded-2xl"
+                    />
+                  )}
+                </DialogContent>
+              </Dialog>
+            </ComponentCard>
+          </div>
+        </div>
+
+        {/* Global Action Footer */}
+        <div className="mt-8 flex items-center justify-between p-4 bg-white dark:bg-[#1e2535] dark:border-[#2a3550] border border-gray-200 rounded-3xl shadow-lg mb-10">
+          <div className="hidden md:flex items-center gap-2 pl-4 text-gray-400 font-medium">
+            <Info className="h-4 w-4" />
+            <span className="text-sm dark:text-gray-400">Please ensure the amount matches your bank statement</span>
+          </div>
+          <div className="flex items-center gap-3 w-full md:w-auto">
+            <button
+              onClick={() => navigate("/payment")}
+              className="px-8 py-3.5 bg-gray-50 dark:bg-[#252d40] dark:text-gray-300 dark:hover:bg-[#2a3550] dark:border-[#2a3550] text-gray-600 rounded-2xl font-bold hover:bg-gray-100 transition-all flex items-center gap-2 flex-1 md:flex-none justify-center border border-gray-100 shadow-sm"
+            >
+              <X className="h-5 w-5" /> Cancel
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={loading || isFieldDisabled}
+              className={`${isFieldDisabled ? "bg-gray-300 pointer-events-none" : "primary-color hover:shadow-lg shadow-blue-50"} text-white px-10 py-3.5 rounded-2xl font-bold transition-all flex items-center gap-2 flex-1 md:flex-none justify-center`}
+            >
+              {loading ? (
+                <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              ) : (
+                <Save className="h-5 w-5" />
               )}
-            </DialogContent>
-          </Dialog>
+              {id ? "Update Payment" : "Save Record"}
+            </button>
+          </div>
         </div>
       </div>
-
-      {/* Action Buttons */}
-      <div className="flex justify-end mt-8 gap-3">
-        <button
-          type="button"
-          onClick={() => navigate("/payment")}
-          className="border border-gray-300 px-6 py-2 rounded-lg hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-800 transition"
-          disabled={loading}
-        >
-          Cancel
-        </button>
-        <button
-          type="button"
-          onClick={handleSubmit}
-          className="primary-color text-white px-6 py-2 rounded-lg hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={loading || isFieldDisabled}
-        >
-          {loading ? "Please wait" : id ? "Update Payment" : "Save Payment"}
-        </button>
-      </div>
-    </ComponentCard>
+    </div>
   );
 };
 

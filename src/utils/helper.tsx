@@ -1,4 +1,6 @@
-export const generateEstimateNumber = (lastEstimate: any) => {
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+export const generateEstimateNumber = (lastEstimate: string) => {
   if (!lastEstimate) return "TE2526001";
 
   const prefix = "TE2526";
@@ -11,7 +13,6 @@ export const generateEstimateNumber = (lastEstimate: any) => {
 export const generateInvoiceNumber = (lastInvoice: string | null) => {
   const prefix = "INV-";
 
-  console.log('lastInvoice', lastInvoice)
   if (!lastInvoice) {
     return `${prefix}001`;
   }
@@ -47,3 +48,6 @@ export const numberToWords = (num: number): string => {
   return "number too large";
 }
 
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}

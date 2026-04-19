@@ -485,3 +485,117 @@ export default function LoginPage(): JSX.Element {
     </div>
   );
 }
+// import React, { useState } from "react";
+// import * as XLSX from "xlsx";
+// import jsPDF from "jspdf";
+// import autoTable from "jspdf-autotable";
+
+// const SignInForm = () => {
+//   const [data, setData] = useState([]);
+//   const [columns, setColumns] = useState([]);
+
+//   // Excel File Read
+//   const handleFileUpload = (e) => {
+//     const file = e.target.files[0];
+//     const reader = new FileReader();
+
+//     reader.onload = (evt) => {
+//       const binaryStr = evt.target.result;
+//       const workbook = XLSX.read(binaryStr, { type: "binary" });
+//       const sheetName = workbook.SheetNames[0];
+//       const worksheet = workbook.Sheets[sheetName];
+//       const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+//       setData(jsonData);
+//       setColumns(Object.keys(jsonData[0] || {}));
+//     };
+
+//     reader.readAsBinaryString(file);
+//   };
+
+//   // PDF Generate
+//   const generatePDF = () => {
+//     const doc = new jsPDF();
+
+//     doc.setFont("helvetica");
+//     doc.setFontSize(14);
+//     doc.text("Name List", 14, 15);
+
+//     autoTable(doc, {
+//       startY: 20,
+//       head: [columns],
+//       body: data.map((row) => columns.map((col) => row[col])),
+//       theme: "grid",
+//       styles: {
+//         fontSize: 10,
+//         textColor: [0, 0, 0], // Black text
+//         lineColor: [0, 0, 0], // Black border
+//         lineWidth: 0.2,
+//       },
+//       headStyles: {
+//         fillColor: [255, 255, 255], // White header
+//         textColor: [0, 0, 0],
+//         fontStyle: "bold",
+//       },
+//     });
+
+//     doc.save("report.pdf");
+//   };
+
+//   return (
+//     <div style={{ padding: "30px", fontFamily: "Arial" }}>
+//       <h2>Excel to PDF Converter</h2>
+
+//       <input type="file" accept=".xlsx, .xls" onChange={handleFileUpload} />
+
+//       {data.length > 0 && (
+//         <>
+//           <button
+//             onClick={generatePDF}
+//             style={{
+//               marginTop: "20px",
+//               padding: "10px 20px",
+//               backgroundColor: "black",
+//               color: "white",
+//               border: "none",
+//               cursor: "pointer",
+//             }}
+//           >
+//             Download PDF
+//           </button>
+
+//           <div style={{ marginTop: "30px", overflowX: "auto" }}>
+//             <table
+//               border="1"
+//               cellPadding="8"
+//               style={{
+//                 borderCollapse: "collapse",
+//                 width: "100%",
+//                 textAlign: "center",
+//               }}
+//             >
+//               <thead>
+//                 <tr>
+//                   {columns.map((col, index) => (
+//                     <th key={index}>{col}</th>
+//                   ))}
+//                 </tr>
+//               </thead>
+//               <tbody>
+//                 {data.map((row, rowIndex) => (
+//                   <tr key={rowIndex}>
+//                     {columns.map((col, colIndex) => (
+//                       <td key={colIndex}>{row[col]}</td>
+//                     ))}
+//                   </tr>
+//                 ))}
+//               </tbody>
+//             </table>
+//           </div>
+//         </>
+//       )}
+//     </div>
+//   );
+// };
+
+// export default SignInForm;
